@@ -281,11 +281,58 @@ h2 {
   letter-spacing: 0.12em;
 }
 
-.trade-title button {
+.trade-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trade-title .delete-trade {
   border: 0;
   background: transparent;
   color: #9a5b50;
   font-size: 11px;
+}
+
+.trade-title .confirm-sale,
+.trade-title .finalize-sale,
+.trade-title .cancel-sale {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.trade-title .confirm-sale {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.trade-title .finalize-sale {
+  border: 1px solid #a44332;
+  background: #a44332;
+  color: #fff;
+}
+
+.trade-title .cancel-sale {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+}
+
+.trade-title .confirm-sale:not(:disabled):hover,
+.trade-title .finalize-sale:hover,
+.trade-title .cancel-sale:hover {
+  transform: translateY(-1px);
+}
+
+.trade-title .confirm-sale:disabled {
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: #eef0ed;
+  color: #a8b0ba;
 }
 
 .input-grid {

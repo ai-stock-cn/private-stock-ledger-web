@@ -69,6 +69,7 @@ export default function PortfolioCalculator() {
   const [stocks, setStocks] = useState<StockLedger[]>(() => initialStocks());
   const [selectedStockId, setSelectedStockId] = useState(INITIAL_STOCKS[0].id);
   const [storageReady, setStorageReady] = useState(false);
+  const [pendingSaleId, setPendingSaleId] = useState<string | null>(null);
   const [calculation, setCalculation] = useState<CalculationResult | null>(null);
   const [calculationError, setCalculationError] = useState(false);
   const selectedStock = stocks.find((stock) => stock.id === selectedStockId) ?? stocks[0]!;
@@ -164,10 +165,26 @@ export default function PortfolioCalculator() {
   }
 
   function removeTrade(id: string) {
+    if (pendingSaleId === id) setPendingSaleId(null);
     updateSelectedStock((stock) => {
       const next = stock.trades.filter((trade) => trade.id !== id);
       return { ...stock, trades: next.length ? next : [emptyTrade()] };
     });
+  }
+
+  function selectStock(id: string) {
+    setPendingSaleId(null);
+    setSelectedStockId(id);
+  }
+
+  function beginTradeSale(trade: TradeInput) {
+    if (!positiveNumber(trade.sellPrice) || !positiveNumber(trade.shares)) return;
+    setPendingSaleId(trade.id);
+  }
+
+  function confirmTradeSale(id: string) {
+    removeTrade(id);
+    setPendingSaleId(null);
   }
 
   function resetCalculator() {
@@ -203,7 +220,7 @@ export default function PortfolioCalculator() {
           <div className="stock-switcher-actions">
             <label className="stock-select">
               <span>切换股票</span>
-              <select value={selectedStock.id} onChange={(event) => setSelectedStockId(event.target.value)}>
+              <select value={selectedStock.id} onChange={(event) => selectStock(event.target.value)}>
                 {stocks.map((stock) => (
                   <option key={stock.id} value={stock.id}>
                     {stock.name || "未命名股票"}{stock.code ? ` · ${stock.code}` : ""}
@@ -264,11 +281,37 @@ export default function PortfolioCalculator() {
             <article className="trade-card" key={trade.id}>
               <div className="trade-title">
                 <span>{selectedStock.name || "当前股票"} · 第 {String(index + 1).padStart(2, "0")} 笔</span>
-                {selectedStock.trades.length > 1 ? (
-                  <button type="button" onClick={() => removeTrade(trade.id)} aria-label={`删除第 ${index + 1} 笔`}>
-                    删除
-                  </button>
-                ) : null}
+                <div className="trade-actions">
+                  {selectedStock.trades.length > 1 ? (
+                    <button
+                      className="delete-trade"
+                      type="button"
+                      onClick={() => removeTrade(trade.id)}
+                      aria-label={`删除第 ${index + 1} 笔`}
+                    >
+                      删除
+                    </button>
+                  ) : null}
+                  {pendingSaleId === trade.id ? (
+                    <>
+                      <button className="cancel-sale" type="button" onClick={() => setPendingSaleId(null)}>
+                        取消
+                      </button>
+                      <button className="finalize-sale" type="button" onClick={() => confirmTradeSale(trade.id)}>
+                        确定卖出
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="confirm-sale"
+                      type="button"
+                      disabled={!positiveNumber(trade.shares) || !positiveNumber(trade.sellPrice)}
+                      onClick={() => beginTradeSale(trade)}
+                    >
+                      确认卖出
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="input-grid">
