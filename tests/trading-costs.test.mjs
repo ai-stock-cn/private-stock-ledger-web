@@ -12,13 +12,22 @@ import {
   roundMoney,
 } from "../lib/trading-costs.js";
 
-test("万一免五买入按佣金和过户费计算", () => {
+test("万一且最低一元买入按佣金和过户费计算", () => {
   const result = calculateBuyTransaction(200, 52.39);
   assert.equal(result.grossAmount, 10478);
   assert.equal(result.commission, 1.05);
   assert.equal(result.transferFee, 0.1);
   assert.equal(result.totalFees, 1.15);
   assert.equal(result.totalCost, 10479.15);
+});
+
+test("小额买入按最低一元佣金计算", () => {
+  const result = calculateBuyTransaction(100, 52.35);
+
+  assert.equal(result.grossAmount, 5235);
+  assert.equal(result.commission, 1);
+  assert.equal(result.transferFee, 0.05);
+  assert.equal(result.totalFees, 1.05);
 });
 
 test("卖出费用包含印花税", () => {
@@ -43,7 +52,7 @@ test("按台账实际费用计算剩余T仓最低盈利卖价", () => {
   const second = findMinimumProfitableSale(100, 5242.58);
 
   assert.equal(first?.minimumProfitPrice, 52.43);
-  assert.equal(second?.minimumProfitPrice, 52.46);
+  assert.equal(second?.minimumProfitPrice, 52.47);
 });
 
 test("买入200股卖出100股后按比例分摊买入费用", () => {
@@ -62,18 +71,18 @@ test("填写卖出价后自动计算已实现盈利", () => {
   assert.ok(sale);
   assert.equal(sale.soldCost, 5242.58);
   assert.equal(sale.grossAmount, 5280);
-  assert.equal(sale.totalFees, 3.22);
-  assert.equal(sale.netProceeds, 5276.78);
-  assert.equal(sale.profit, 34.2);
+  assert.equal(sale.totalFees, 3.69);
+  assert.equal(sale.netProceeds, 5276.31);
+  assert.equal(sale.profit, 33.73);
 });
 
 test("已实现盈利自动降低1500股底仓和1800股整仓策略成本", () => {
-  const result = calculateAdjustedHoldingCosts(91777.18, 1500, 1800, 15721.73, 34.2);
+  const result = calculateAdjustedHoldingCosts(91777.18, 1500, 1800, 15721.73, 33.73);
 
   assert.equal(result.baseCostBeforeAdjustment, 76055.45);
-  assert.equal(result.adjustedBaseCost, 76021.25);
+  assert.equal(result.adjustedBaseCost, 76021.72);
   assert.equal(roundMoney(result.adjustedBaseUnitCost), 50.68);
-  assert.equal(result.adjustedTotalCost, 91742.98);
+  assert.equal(result.adjustedTotalCost, 91743.45);
   assert.equal(roundMoney(result.adjustedTotalUnitCost), 50.97);
 });
 

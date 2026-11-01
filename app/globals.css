@@ -247,9 +247,11 @@ button { color: inherit; }
 .fee-settings h2 { margin: 5px 0 9px; font: 500 27px Georgia, "Songti SC", serif; }
 .fee-settings > p { margin: 0 0 20px; color: var(--muted); font-size: 10px; line-height: 1.7; }
 .fee-settings label { margin-top: 13px; }
-.percent-input { position: relative; }
+.percent-input, .currency-setting { position: relative; }
 .percent-input input { height: 40px; padding: 0 34px 0 11px; }
 .percent-input i { position: absolute; top: 50%; right: 12px; color: var(--muted); font-style: normal; transform: translateY(-50%); }
+.currency-setting input { height: 40px; padding: 0 11px 0 30px; }
+.currency-setting i { position: absolute; top: 50%; left: 12px; color: var(--muted); font-style: normal; transform: translateY(-50%); }
 .fee-rules, .formula, .privacy-note { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
 .fee-rules div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 9px; }
 .fee-rules span { color: var(--muted); }

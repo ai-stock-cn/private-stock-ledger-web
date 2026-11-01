@@ -1,5 +1,6 @@
 export type AShareFeeRates = {
   commissionRate: number;
+  minimumCommission: number;
   transferFeeRate: number;
   stampDutyRate: number;
   priceTick: number;

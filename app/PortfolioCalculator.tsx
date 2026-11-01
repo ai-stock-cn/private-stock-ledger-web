@@ -41,12 +41,13 @@ type Holding = StockPreset & {
 
 type FeeForm = {
   commissionPercent: number;
+  minimumCommission: number;
   transferFeePercent: number;
   stampDutyPercent: number;
 };
 
 type SavedPortfolio = {
-  version: 6;
+  version: 7;
   holdings: Holding[];
   fees: FeeForm;
 };
@@ -80,6 +81,7 @@ const STOCK_PRESETS: StockPreset[] = [
 
 const DEFAULT_FEES: FeeForm = {
   commissionPercent: 0.01,
+  minimumCommission: 1,
   transferFeePercent: 0.001,
   stampDutyPercent: 0.05,
 };
@@ -114,8 +116,8 @@ const DEFAULT_HOLDINGS: Holding[] = [
     ],
   },
 ];
-const STORAGE_KEY = "private-stock-portfolio-v6";
-const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v5", "private-stock-portfolio-v4", "private-stock-portfolio-v3", "private-stock-portfolio-v2", "private-stock-portfolio-v1"];
+const STORAGE_KEY = "private-stock-portfolio-v7";
+const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v6", "private-stock-portfolio-v5", "private-stock-portfolio-v4", "private-stock-portfolio-v3", "private-stock-portfolio-v2", "private-stock-portfolio-v1"];
 const money = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const precisePrice = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
@@ -132,19 +134,19 @@ export default function PortfolioCalculator() {
       const value = window.localStorage.getItem(STORAGE_KEY);
       if (value) {
         const saved = JSON.parse(value) as SavedPortfolio;
-        if (saved.version === 6 && Array.isArray(saved.holdings)) {
+        if (saved.version === 7 && Array.isArray(saved.holdings)) {
           setHoldings(saved.holdings);
-          setFees(saved.fees ?? DEFAULT_FEES);
+          setFees({ ...DEFAULT_FEES, ...saved.fees });
         }
       } else {
         const previousValue = PREVIOUS_STORAGE_KEYS
           .map((key) => window.localStorage.getItem(key))
           .find((item): item is string => Boolean(item));
         if (previousValue) {
-          const previous = JSON.parse(previousValue) as Omit<SavedPortfolio, "version"> & { version: 1 | 2 | 3 | 4 | 5 };
-          if ([1, 2, 3, 4, 5].includes(previous.version) && Array.isArray(previous.holdings)) {
+          const previous = JSON.parse(previousValue) as Omit<SavedPortfolio, "version"> & { version: 1 | 2 | 3 | 4 | 5 | 6 };
+          if ([1, 2, 3, 4, 5, 6].includes(previous.version) && Array.isArray(previous.holdings)) {
             setHoldings(mergeLedgerData(previous.holdings));
-            setFees(previous.fees ?? DEFAULT_FEES);
+            setFees({ ...DEFAULT_FEES, ...previous.fees });
           }
         }
       }
@@ -157,13 +159,14 @@ export default function PortfolioCalculator() {
 
   useEffect(() => {
     if (!isReady) return;
-    const saved: SavedPortfolio = { version: 6, holdings, fees };
+    const saved: SavedPortfolio = { version: 7, holdings, fees };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     setSavedAt(new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }));
   }, [fees, holdings, isReady]);
 
   const rates = useMemo<AShareFeeRates>(() => ({
     commissionRate: fees.commissionPercent / 100,
+    minimumCommission: fees.minimumCommission,
     transferFeeRate: fees.transferFeePercent / 100,
     stampDutyRate: fees.stampDutyPercent / 100,
     priceTick: 0.01,
@@ -241,7 +244,7 @@ export default function PortfolioCalculator() {
         </div>
         <div className="fee-hero">
           <span>当前账户口径</span>
-          <strong>万一免五</strong>
+          <strong>万一 · 最低 ¥{money.format(fees.minimumCommission)}</strong>
           <div><span>买入综合费率</span><b>{formatPercent(fees.commissionPercent + fees.transferFeePercent)}</b></div>
           <div><span>卖出综合费率</span><b>{formatPercent(fees.commissionPercent + fees.transferFeePercent + fees.stampDutyPercent)}</b></div>
           <div><span>最小报价单位</span><b>¥0.01</b></div>
@@ -367,11 +370,12 @@ export default function PortfolioCalculator() {
         </div>
 
         <aside className="fee-settings">
-          <span className="eyebrow">费用设置</span><h2>交易费率</h2><p>默认按万一免五计算，每项费用按分四舍五入。</p>
+          <span className="eyebrow">费用设置</span><h2>交易费率</h2><p>按您的光大证券交割明细：佣金万一、每笔最低 1 元。</p>
           <label><span>券商佣金（双向）</span><span className="percent-input"><input type="number" min="0" step="0.001" value={fees.commissionPercent} onChange={(event) => setFees((current) => ({ ...current, commissionPercent: Number(event.target.value) }))} /><i>%</i></span></label>
+          <label><span>单笔最低佣金</span><span className="currency-setting"><i>¥</i><input type="number" min="0" step="0.01" value={fees.minimumCommission} onChange={(event) => setFees((current) => ({ ...current, minimumCommission: Number(event.target.value) }))} /></span></label>
           <label><span>A股过户费（双向）</span><span className="percent-input"><input type="number" min="0" step="0.001" value={fees.transferFeePercent} onChange={(event) => setFees((current) => ({ ...current, transferFeePercent: Number(event.target.value) }))} /><i>%</i></span></label>
           <label><span>印花税（仅卖出）</span><span className="percent-input"><input type="number" min="0" step="0.01" value={fees.stampDutyPercent} onChange={(event) => setFees((current) => ({ ...current, stampDutyPercent: Number(event.target.value) }))} /><i>%</i></span></label>
-          <div className="fee-rules"><div><span>买入</span><b>佣金 + 过户费</b></div><div><span>卖出</span><b>佣金 + 过户费 + 印花税</b></div><div><span>最低佣金</span><b>¥0（免五）</b></div></div>
+          <div className="fee-rules"><div><span>买入</span><b>佣金 + 过户费</b></div><div><span>卖出</span><b>佣金 + 过户费 + 印花税</b></div><div><span>最低佣金</span><b>¥{money.format(fees.minimumCommission)} / 笔</b></div></div>
           <div className="formula"><strong>计算方法</strong><p>最低盈利价是第一个满足“卖出净额 &gt; 含费成本”的 ¥0.01 报价。</p></div>
           <div className="privacy-note"><strong>隐私说明</strong><p>持仓与买卖记录仅保存在当前浏览器，不会写入网站代码或公开数据。</p></div>
           <small>实际费用可能存在规费合并或尾差，请以券商交割单为准，可在上方调整费率。</small>
