@@ -1,0 +1,265 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #0a1222;
+  --muted: #667085;
+  --paper: #f4f3ed;
+  --panel: #fbfbf7;
+  --line: rgba(10, 18, 34, 0.12);
+  --lime: #d7ff63;
+  --blue: #dce9ff;
+  --red: #c9533f;
+  --green: #267154;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font: inherit; }
+button { color: inherit; }
+
+.portfolio-shell {
+  min-height: 100vh;
+  padding-bottom: 72px;
+  background:
+    radial-gradient(circle at 93% 5%, rgba(215, 255, 99, 0.46), transparent 25%),
+    radial-gradient(circle at 2% 46%, rgba(121, 168, 255, 0.18), transparent 24%),
+    var(--paper);
+}
+
+.portfolio-topbar, .portfolio-intro, .portfolio-toolbar, .portfolio-layout {
+  width: min(1380px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.portfolio-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--lime);
+  font-weight: 900;
+}
+.brand strong, .brand small { display: block; }
+.brand strong { font-size: 15px; letter-spacing: .08em; }
+.brand small { margin-top: 3px; color: var(--muted); font: 8px ui-monospace, monospace; letter-spacing: .18em; }
+
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.55);
+  color: var(--muted);
+  font-size: 10px;
+}
+.save-status i { width: 7px; height: 7px; border-radius: 50%; background: #56a577; box-shadow: 0 0 0 4px rgba(86,165,119,.12); }
+
+.portfolio-intro {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 380px;
+  align-items: end;
+  gap: 64px;
+  padding: 72px 0 52px;
+}
+
+.eyebrow { color: #728096; font: 700 10px ui-monospace, monospace; letter-spacing: .12em; }
+.portfolio-intro h1 {
+  max-width: 800px;
+  margin: 15px 0 20px;
+  font-family: Georgia, "Songti SC", "SimSun", serif;
+  font-size: clamp(52px, 6.3vw, 88px);
+  font-weight: 500;
+  letter-spacing: -.055em;
+  line-height: 1.03;
+}
+.portfolio-intro > div:first-child > p { max-width: 650px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.9; }
+
+.fee-hero {
+  padding: 25px;
+  border-radius: 24px;
+  background: var(--ink);
+  color: white;
+  box-shadow: 0 24px 60px rgba(10,18,34,.14);
+}
+.fee-hero > span { color: #98a5b8; font-size: 10px; }
+.fee-hero > strong { display: block; margin: 8px 0 22px; color: var(--lime); font: 800 32px ui-monospace, monospace; }
+.fee-hero > div { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.12); font-size: 11px; }
+.fee-hero > div span { color: #98a5b8; }
+.fee-hero b { font-family: ui-monospace, monospace; }
+
+.portfolio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(251,251,247,.84);
+  backdrop-filter: blur(12px);
+}
+.portfolio-toolbar h2 { margin: 5px 0 0; font: 500 28px Georgia, "Songti SC", serif; }
+.add-stock { display: flex; gap: 10px; }
+.add-stock select, .add-stock button { min-height: 44px; border: 1px solid var(--line); border-radius: 12px; }
+.add-stock select { min-width: 290px; padding: 0 14px; background: white; color: var(--ink); }
+.add-stock button, .lot-heading button { padding: 0 18px; border: 0; background: var(--ink); color: white; font-size: 11px; font-weight: 800; cursor: pointer; }
+.add-stock button:disabled { opacity: .45; cursor: not-allowed; }
+
+.portfolio-layout {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 300px;
+  align-items: start;
+  gap: 22px;
+  padding-top: 22px;
+}
+.holdings-list { display: grid; gap: 20px; min-width: 0; }
+.holding-card { overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: rgba(251,251,247,.96); box-shadow: 0 18px 44px rgba(10,18,34,.06); }
+
+.holding-head {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 160px auto;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  background: var(--ink);
+  color: white;
+}
+.stock-name { display: flex; align-items: center; gap: 15px; }
+.stock-name > span { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 13px; background: var(--lime); color: var(--ink); font: 800 11px ui-monospace, monospace; }
+.stock-name small { color: #9aa7bb; font-size: 9px; }
+.stock-name h2 { margin: 4px 0 0; font: 500 27px Georgia, "Songti SC", serif; }
+.reference-price { display: grid; gap: 5px; color: #9aa7bb; font-size: 9px; }
+.currency-input { position: relative; }
+.currency-input i { position: absolute; top: 50%; left: 10px; color: var(--lime); font-style: normal; transform: translateY(-50%); }
+.reference-price input { width: 100%; height: 38px; padding: 0 8px 0 25px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; outline: none; background: rgba(255,255,255,.07); color: white; font: 800 14px ui-monospace, monospace; }
+.remove-holding { padding: 8px 11px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; background: transparent; color: #aeb8c7; font-size: 9px; cursor: pointer; }
+
+.base-panel {
+  display: grid;
+  grid-template-columns: minmax(220px,1fr) 160px 190px 180px;
+  align-items: end;
+  gap: 16px;
+  margin: 24px;
+  padding: 20px;
+  border: 1px solid rgba(10,18,34,.1);
+  border-radius: 18px;
+  background: #eef4ff;
+}
+.base-copy h3, .lot-heading h3 { margin: 4px 0 5px; font: 500 22px Georgia, "Songti SC", serif; }
+.base-copy p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.base-panel label, .fee-settings label { display: grid; gap: 7px; color: var(--muted); font-size: 9px; }
+.base-panel input, .lot-table input, .fee-settings input { width: 100%; border: 1px solid rgba(10,18,34,.13); border-radius: 10px; outline: none; background: white; color: var(--ink); font-family: ui-monospace, monospace; }
+.base-panel input { height: 42px; padding: 0 11px; font-size: 12px; }
+.base-panel input:focus, .lot-table input:focus, .fee-settings input:focus { border-color: #5b78b6; box-shadow: 0 0 0 3px rgba(121,168,255,.18); }
+.base-total { padding: 11px 13px; border-radius: 11px; background: white; }
+.base-total span, .base-total strong { display: block; }
+.base-total span { color: var(--muted); font-size: 9px; }
+.base-total strong { margin-top: 5px; font: 800 13px ui-monospace, monospace; }
+
+.lot-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 28px 16px; }
+.lot-heading button { min-height: 38px; border-radius: 10px; }
+.empty-lots { margin: 0 24px 24px; padding: 24px; border: 1px dashed rgba(10,18,34,.18); border-radius: 16px; color: var(--muted); font-size: 11px; text-align: center; }
+.lot-table-wrap { overflow-x: auto; padding: 0 24px 24px; }
+.lot-table { width: 100%; min-width: 900px; border-collapse: collapse; table-layout: fixed; }
+.lot-table th, .lot-table td { padding: 12px 9px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: middle; }
+.lot-table th { color: #7c8799; font-size: 8px; font-weight: 600; }
+.lot-table td { font: 11px ui-monospace, monospace; }
+.lot-table th:first-child, .lot-table td:first-child { width: 126px; text-align: left; }
+.lot-table th:nth-child(2), .lot-table td:nth-child(2) { width: 86px; }
+.lot-table th:nth-child(3), .lot-table td:nth-child(3) { width: 98px; }
+.lot-table th:last-child, .lot-table td:last-child { width: 42px; }
+.lot-table input { height: 34px; padding: 0 7px; text-align: right; }
+.lot-table input[type="date"] { text-align: left; }
+.lot-table td strong, .lot-table td small { display: block; }
+.lot-table td small { margin-top: 4px; color: var(--muted); font-size: 8px; }
+.profit-price strong { color: var(--green); font-size: 14px; }
+.delete-lot { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f0f1ed; color: var(--muted); cursor: pointer; }
+
+.position-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid var(--line); }
+.position-summary > div { min-height: 116px; padding: 20px; border-right: 1px solid var(--line); }
+.position-summary > div:last-child { border-right: 0; }
+.position-summary span, .position-summary strong, .position-summary small { display: block; }
+.position-summary span { color: var(--muted); font-size: 9px; }
+.position-summary strong { margin: 12px 0 5px; font: 800 clamp(16px,2vw,23px) ui-monospace, monospace; }
+.position-summary small { color: var(--muted); font-size: 8px; line-height: 1.5; }
+.position-summary .summary-focus { background: rgba(215,255,99,.4); }
+.summary-focus strong, .positive strong { color: var(--green); }
+.negative strong { color: var(--red); }
+
+.fee-settings { position: sticky; top: 18px; padding: 24px; border: 1px solid var(--line); border-radius: 24px; background: rgba(251,251,247,.96); }
+.fee-settings h2 { margin: 5px 0 9px; font: 500 27px Georgia, "Songti SC", serif; }
+.fee-settings > p { margin: 0 0 20px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.fee-settings label { margin-top: 13px; }
+.percent-input { position: relative; }
+.percent-input input { height: 40px; padding: 0 34px 0 11px; }
+.percent-input i { position: absolute; top: 50%; right: 12px; color: var(--muted); font-style: normal; transform: translateY(-50%); }
+.fee-rules, .formula, .privacy-note { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.fee-rules div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 9px; }
+.fee-rules span { color: var(--muted); }
+.formula strong, .privacy-note strong { display: block; margin-bottom: 8px; font-size: 10px; }
+.formula p, .privacy-note p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.65; }
+.privacy-note { padding: 15px; border: 0; border-radius: 13px; background: rgba(215,255,99,.28); }
+.fee-settings > small { display: block; margin-top: 18px; color: #8a93a2; font-size: 8px; line-height: 1.65; }
+
+@media (max-width: 1120px) {
+  .portfolio-intro { grid-template-columns: 1fr 330px; }
+  .portfolio-layout { grid-template-columns: 1fr; }
+  .fee-settings { position: static; }
+  .base-panel { grid-template-columns: 1fr 160px 190px; }
+  .base-total { grid-column: 2 / -1; }
+}
+
+@media (max-width: 760px) {
+  .portfolio-topbar, .portfolio-intro, .portfolio-toolbar, .portfolio-layout { width: min(100% - 28px,1380px); }
+  .portfolio-topbar { padding: 18px 0; }
+  .portfolio-intro { grid-template-columns: 1fr; gap: 28px; padding: 44px 0 32px; }
+  .portfolio-intro h1 { font-size: clamp(48px,15vw,70px); }
+  .portfolio-toolbar { display: block; }
+  .add-stock { display: grid; grid-template-columns: 1fr auto; margin-top: 18px; }
+  .add-stock select { width: 100%; min-width: 0; }
+  .holding-head { grid-template-columns: minmax(0,1fr) 140px; padding: 20px; }
+  .remove-holding { grid-column: 2; }
+  .base-panel { grid-template-columns: 1fr 1fr; margin: 14px; }
+  .base-copy, .base-total { grid-column: 1 / -1; }
+  .lot-heading { padding-inline: 18px; }
+  .lot-table-wrap { padding-inline: 14px; }
+  .position-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .position-summary > div:nth-child(2) { border-right: 0; }
+  .position-summary > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+}
+
+@media (max-width: 470px) {
+  .brand small { display: none; }
+  .save-status { padding-inline: 10px; font-size: 8px; }
+  .add-stock { grid-template-columns: 1fr; }
+  .add-stock button { min-height: 42px; }
+  .holding-head { grid-template-columns: 1fr; }
+  .reference-price { width: 150px; }
+  .remove-holding { grid-column: auto; justify-self: start; }
+  .base-panel { grid-template-columns: 1fr; }
+  .base-copy, .base-total { grid-column: auto; }
+  .lot-heading { align-items: end; }
+  .position-summary { grid-template-columns: 1fr; }
+  .position-summary > div { border-right: 0; border-bottom: 1px solid var(--line); }
+}
