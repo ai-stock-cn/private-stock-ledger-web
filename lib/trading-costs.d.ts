@@ -86,15 +86,14 @@ export type MinimumProfitableSale = {
   profit: number;
 };
 
-export const DEFAULT_A_SHARE_FEE_RATES: Readonly<AShareFeeRates>;
 export function roundMoney(value: number): number;
-export function calculateBuyTransaction(shares: number, price: number, rates?: AShareFeeRates): BuyTransaction;
+export function calculateBuyTransaction(shares: number, price: number, rates: AShareFeeRates): BuyTransaction;
 export function calculateRemainingLotCost(shares: number, price: number, totalBuyFee: number, soldShares?: number): RemainingLotCost;
-export function calculateSellTransaction(shares: number, price: number, rates?: AShareFeeRates): SellTransaction;
-export function calculateRealizedLotSale(soldShares: number, buyPrice: number, allocatedBuyFee: number, sellPrice: number, rates?: AShareFeeRates): RealizedLotSale | null;
-export function calculateFifoSale(lots: Array<{ id: string; shares: number; price: number; buyFee: number }>, soldShares: number, sellPrice: number, rates?: AShareFeeRates): FifoSale | null;
+export function calculateSellTransaction(shares: number, price: number, rates: AShareFeeRates): SellTransaction;
+export function calculateRealizedLotSale(soldShares: number, buyPrice: number, allocatedBuyFee: number, sellPrice: number, rates: AShareFeeRates): RealizedLotSale | null;
+export function calculateFifoSale(lots: Array<{ id: string; shares: number; price: number; buyFee: number }>, soldShares: number, sellPrice: number, rates: AShareFeeRates): FifoSale | null;
 export function calculateBrokerAdjustedPosition(totalCost: number, netSaleProceeds: number, remainingShares: number): { adjustedTotalCost: number; adjustedUnitCost: number };
 export function calculateAdjustedHoldingCosts(totalCost: number, baseShares: number, totalShares: number, remainingLotCost: number, realizedProfit: number): AdjustedHoldingCosts;
-export function findMinimumProfitableSale(shares: number, totalCost: number, rates?: AShareFeeRates): MinimumProfitableSale | null;
+export function findMinimumProfitableSale(shares: number, totalCost: number, rates: AShareFeeRates): MinimumProfitableSale | null;
 export function findMinimumProfitableSaleWithFixedFee(shares: number, totalCost: number, fixedSellFee: number, priceTick?: number): MinimumProfitableSale | null;
-export function calculateProfitAtPrice(shares: number, totalCost: number, sellPrice: number, rates?: AShareFeeRates): SellTransaction & { profit: number };
+export function calculateProfitAtPrice(shares: number, totalCost: number, sellPrice: number, rates: AShareFeeRates): SellTransaction & { profit: number };

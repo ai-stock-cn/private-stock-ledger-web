@@ -1,12 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  calculateBuyTransaction,
-  calculateProfitAtPrice,
-  findMinimumProfitableSale,
-  type AShareFeeRates,
-} from "@/lib/trading-costs.js";
+import { useEffect, useMemo, useState } from "react";
 
 type TradeInput = {
   id: string;
@@ -14,14 +8,6 @@ type TradeInput = {
   shares: string;
   buyPrice: string;
   sellPrice: string;
-};
-
-const FIXED_RATES: AShareFeeRates = {
-  commissionRate: 0.0001,
-  minimumCommission: 1,
-  transferFeeRate: 0.00001,
-  stampDutyRate: 0.0005,
-  priceTick: 0.01,
 };
 
 const INITIAL_TRADES: TradeInput[] = [
@@ -51,56 +37,70 @@ const price = new Intl.NumberFormat("zh-CN", {
 });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
 
+type CalculationResult = {
+  rows: Array<{
+    buyAmount: number | null;
+    minimumProfitPrice: number | null;
+    profit: number | null;
+  }>;
+  combined: {
+    totalShares: number;
+    totalBuyAmount: number;
+    minimumProfitPrice: number | null;
+    profit: number | null;
+    netProceeds: number | null;
+    completedSeparateTrades: number;
+    separateProfit: number;
+  };
+};
+
 export default function PortfolioCalculator() {
   const [trades, setTrades] = useState<TradeInput[]>(() => initialTrades());
   const [combinedSellPrice, setCombinedSellPrice] = useState("");
+  const [calculation, setCalculation] = useState<CalculationResult | null>(null);
+  const [calculationError, setCalculationError] = useState(false);
 
-  const calculations = useMemo(() => trades.map((trade) => {
-    const shares = positiveNumber(trade.shares);
-    const buyPrice = positiveNumber(trade.buyPrice);
-    const sellPrice = positiveNumber(trade.sellPrice);
-    const buy = shares && buyPrice
-      ? calculateBuyTransaction(shares, buyPrice, FIXED_RATES)
-      : null;
-    const sale = buy && sellPrice
-      ? calculateProfitAtPrice(shares, buy.totalCost, sellPrice, FIXED_RATES)
-      : null;
-    const minimum = buy
-      ? findMinimumProfitableSale(shares, buy.totalCost, FIXED_RATES)
-      : null;
+  const requestPayload = useMemo(() => ({
+    trades: trades.map((trade) => ({
+      shares: positiveNumber(trade.shares),
+      buyPrice: positiveNumber(trade.buyPrice),
+      sellPrice: positiveNumber(trade.sellPrice),
+    })),
+    combinedSellPrice: positiveNumber(combinedSellPrice),
+  }), [combinedSellPrice, trades]);
 
-    return { trade, shares, buy, sale, minimum };
-  }), [trades]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch("/api/calculate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestPayload),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("calculation_failed");
+        const result = await response.json() as CalculationResult;
+        setCalculation(result);
+        setCalculationError(false);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setCalculation(null);
+        setCalculationError(true);
+      }
+    }, 180);
 
-  const combined = useMemo(() => {
-    const validRows = calculations.filter((item) => item.buy);
-    const totalShares = validRows.reduce((sum, item) => sum + item.shares, 0);
-    const totalCost = validRows.reduce((sum, item) => sum + (item.buy?.totalCost ?? 0), 0);
-    const totalBuyAmount = validRows.reduce((sum, item) => sum + (item.buy?.grossAmount ?? 0), 0);
-    const targetPrice = positiveNumber(combinedSellPrice);
-    const sale = totalShares && totalCost && targetPrice
-      ? calculateProfitAtPrice(totalShares, totalCost, targetPrice, FIXED_RATES)
-      : null;
-    const minimum = totalShares && totalCost
-      ? findMinimumProfitableSale(totalShares, totalCost, FIXED_RATES)
-      : null;
-    const separateProfit = calculations.reduce(
-      (sum, item) => sum + (item.sale?.profit ?? 0),
-      0,
-    );
-    const completedSeparateTrades = calculations.filter((item) => item.sale).length;
-
-    return {
-      totalShares,
-      totalCost,
-      totalBuyAmount,
-      targetPrice,
-      sale,
-      minimum,
-      separateProfit,
-      completedSeparateTrades,
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
     };
-  }, [calculations, combinedSellPrice]);
+  }, [requestPayload]);
+
+  const calculations = trades.map((trade, index) => ({
+    trade,
+    result: calculation?.rows[index] ?? null,
+  }));
+  const combined = calculation?.combined ?? null;
 
   function updateTrade(id: string, field: "shares" | "buyPrice" | "sellPrice", value: string) {
     setTrades((current) => current.map((trade) => (
@@ -142,7 +142,10 @@ export default function PortfolioCalculator() {
         </div>
 
         <div className="trade-list">
-          {calculations.map(({ trade, buy, sale, minimum }, index) => (
+          {calculationError ? (
+            <p className="calculation-error" role="alert">暂时无法计算，请稍后再试。</p>
+          ) : null}
+          {calculations.map(({ trade, result }, index) => (
             <article className="trade-card" key={trade.id}>
               <div className="trade-title">
                 <span>{trade.stockName ? `${trade.stockName} · ` : ""}第 {String(index + 1).padStart(2, "0")} 笔</span>
@@ -202,16 +205,16 @@ export default function PortfolioCalculator() {
               </div>
 
               <div className="result-grid">
-                <ResultItem label="买入金额" value={buy ? `¥${money.format(buy.grossAmount)}` : "—"} />
+                <ResultItem label="买入金额" value={currencyOrDash(result?.buyAmount)} />
                 <ResultItem
                   label="不亏卖价"
-                  value={minimum ? `¥${price.format(minimum.minimumProfitPrice)}` : "—"}
+                  value={priceOrDash(result?.minimumProfitPrice)}
                   tone="accent"
                 />
                 <ResultItem
                   label="预计盈利"
-                  value={sale ? signedMoney(sale.profit) : "—"}
-                  tone={profitTone(sale?.profit)}
+                  value={result?.profit === null || result?.profit === undefined ? "—" : signedMoney(result.profit)}
+                  tone={profitTone(result?.profit ?? undefined)}
                 />
               </div>
             </article>
@@ -246,27 +249,27 @@ export default function PortfolioCalculator() {
         <div className="combined-results">
           <div className="combined-primary">
             <span>一起卖预计盈利</span>
-            <strong className={profitTone(combined.sale?.profit)}>
-              {combined.sale ? signedMoney(combined.sale.profit) : "—"}
+            <strong className={profitTone(combined?.profit ?? undefined)}>
+              {combined?.profit === null || combined?.profit === undefined ? "—" : signedMoney(combined.profit)}
             </strong>
             <small>
-              {combined.sale
-                ? `净回款 ¥${money.format(combined.sale.netProceeds)}`
+              {combined?.netProceeds !== null && combined?.netProceeds !== undefined
+                ? `净回款 ¥${money.format(combined.netProceeds)}`
                 : "填写买入记录和统一卖价后自动计算"}
             </small>
           </div>
           <div className="combined-details">
-            <ResultItem label="合计股数" value={combined.totalShares ? `${integer.format(combined.totalShares)} 股` : "—"} />
-            <ResultItem label="总买入金额" value={combined.totalBuyAmount ? `¥${money.format(combined.totalBuyAmount)}` : "—"} />
+            <ResultItem label="合计股数" value={combined?.totalShares ? `${integer.format(combined.totalShares)} 股` : "—"} />
+            <ResultItem label="总买入金额" value={currencyOrDash(combined?.totalBuyAmount)} />
             <ResultItem
               label="一起卖不亏价"
-              value={combined.minimum ? `¥${price.format(combined.minimum.minimumProfitPrice)}` : "—"}
+              value={priceOrDash(combined?.minimumProfitPrice)}
               tone="accent"
             />
             <ResultItem
-              label={`分笔卖盈利${combined.completedSeparateTrades ? `（${combined.completedSeparateTrades}笔）` : ""}`}
-              value={combined.completedSeparateTrades ? signedMoney(combined.separateProfit) : "—"}
-              tone={combined.completedSeparateTrades ? profitTone(combined.separateProfit) : undefined}
+              label={`分笔卖盈利${combined?.completedSeparateTrades ? `（${combined.completedSeparateTrades}笔）` : ""}`}
+              value={combined?.completedSeparateTrades ? signedMoney(combined.separateProfit) : "—"}
+              tone={combined?.completedSeparateTrades ? profitTone(combined.separateProfit) : undefined}
             />
           </div>
         </div>
@@ -304,6 +307,14 @@ function positiveNumber(value: string) {
 function signedMoney(value: number) {
   const sign = value > 0 ? "+" : value < 0 ? "−" : "";
   return `${sign}¥${money.format(Math.abs(value))}`;
+}
+
+function currencyOrDash(value: number | null | undefined) {
+  return value === null || value === undefined ? "—" : `¥${money.format(value)}`;
+}
+
+function priceOrDash(value: number | null | undefined) {
+  return value === null || value === undefined ? "—" : `¥${price.format(value)}`;
 }
 
 function profitTone(value?: number): "positive" | "negative" | undefined {
