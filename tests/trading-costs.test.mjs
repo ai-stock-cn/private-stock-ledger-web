@@ -4,6 +4,7 @@ import {
   calculateBuyTransaction,
   calculateSellTransaction,
   findMinimumProfitableSale,
+  findMinimumProfitableSaleWithFixedFee,
 } from "../lib/trading-costs.js";
 
 test("万一免五买入按佣金和过户费计算", () => {
@@ -30,4 +31,15 @@ test("最低盈利卖价严格覆盖全部买卖费用", () => {
   assert.ok(result.profit > 0);
   const previous = calculateSellTransaction(300, result.minimumProfitPrice - 0.01);
   assert.ok(previous.netProceeds <= buy.totalCost);
+});
+
+test("按台账实际费用计算两笔T仓最低盈利卖价", () => {
+  const first = findMinimumProfitableSaleWithFixedFee(200, 10479.15, 6.42);
+  const second = findMinimumProfitableSaleWithFixedFee(100, 5243.15, 3.7);
+  const combined = findMinimumProfitableSaleWithFixedFee(300, 15722.3, 10.12);
+
+  assert.equal(first?.minimumProfitPrice, 52.43);
+  assert.equal(second?.minimumProfitPrice, 52.47);
+  assert.equal(combined?.minimumProfitPrice, 52.45);
+  assert.equal(combined?.profit, 2.58);
 });

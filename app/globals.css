@@ -194,16 +194,17 @@ button { color: inherit; }
 .lot-heading button { min-height: 38px; border-radius: 10px; }
 .empty-lots { margin: 0 24px 24px; padding: 24px; border: 1px dashed rgba(10,18,34,.18); border-radius: 16px; color: var(--muted); font-size: 11px; text-align: center; }
 .lot-table-wrap { overflow-x: auto; padding: 0 24px 24px; }
-.lot-table { width: 100%; min-width: 900px; border-collapse: collapse; table-layout: fixed; }
+.lot-table { width: 100%; min-width: 1080px; border-collapse: collapse; table-layout: fixed; }
 .lot-table th, .lot-table td { padding: 12px 9px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: middle; }
 .lot-table th { color: #7c8799; font-size: 8px; font-weight: 600; }
 .lot-table td { font: 11px ui-monospace, monospace; }
-.lot-table th:first-child, .lot-table td:first-child { width: 126px; text-align: left; }
+.lot-table th:first-child, .lot-table td:first-child { width: 132px; text-align: left; }
 .lot-table th:nth-child(2), .lot-table td:nth-child(2) { width: 86px; }
 .lot-table th:nth-child(3), .lot-table td:nth-child(3) { width: 98px; }
 .lot-table th:last-child, .lot-table td:last-child { width: 42px; }
 .lot-table input { height: 34px; padding: 0 7px; text-align: right; }
 .lot-table input[type="date"] { text-align: left; }
+.batch-id { display: block; margin-bottom: 5px; color: #61708a; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
 .lot-table td strong, .lot-table td small { display: block; }
 .lot-table td small { margin-top: 4px; color: var(--muted); font-size: 8px; }
 .profit-price strong { color: var(--green); font-size: 14px; }

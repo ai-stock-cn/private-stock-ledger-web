@@ -40,4 +40,5 @@ export function roundMoney(value: number): number;
 export function calculateBuyTransaction(shares: number, price: number, rates?: AShareFeeRates): BuyTransaction;
 export function calculateSellTransaction(shares: number, price: number, rates?: AShareFeeRates): SellTransaction;
 export function findMinimumProfitableSale(shares: number, totalCost: number, rates?: AShareFeeRates): MinimumProfitableSale | null;
+export function findMinimumProfitableSaleWithFixedFee(shares: number, totalCost: number, fixedSellFee: number, priceTick?: number): MinimumProfitableSale | null;
 export function calculateProfitAtPrice(shares: number, totalCost: number, sellPrice: number, rates?: AShareFeeRates): SellTransaction & { profit: number };
