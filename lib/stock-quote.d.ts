@@ -14,4 +14,6 @@ export type StockQuote = {
 };
 
 export function stockSecId(code: string): string;
+export function stockSymbol(code: string): string;
 export function parseEastMoneyQuote(payload: unknown): StockQuote;
+export function parseTencentQuote(payload: unknown): StockQuote;

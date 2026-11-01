@@ -337,6 +337,7 @@ export default function PortfolioCalculator() {
           loading={quoteLoading}
           error={quoteError}
           code={selectedStock.code}
+          fallbackName={selectedStock.name}
           onRefresh={() => void refreshQuote()}
         />
       </section>
@@ -543,12 +544,14 @@ function LiveQuotePanel({
   loading,
   error,
   code,
+  fallbackName,
   onRefresh,
 }: {
   quote: StockQuote | null;
   loading: boolean;
   error: boolean;
   code: string;
+  fallbackName: string;
   onRefresh: () => void;
 }) {
   const validCode = /^\d{6}$/.test(code.trim());
@@ -559,7 +562,7 @@ function LiveQuotePanel({
       <div className="live-quote-heading">
         <div>
           <span className="eyebrow">实时行情 · 每60秒自动刷新</span>
-          <strong>{quote?.name || (validCode ? "正在获取行情" : "请输入六位股票代码")}</strong>
+          <strong>{quote?.name || fallbackName || (validCode ? "正在获取行情" : "请输入六位股票代码")}</strong>
         </div>
         <button type="button" onClick={onRefresh} disabled={!validCode || loading}>
           {loading ? "刷新中" : "刷新行情"}

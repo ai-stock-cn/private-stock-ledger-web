@@ -11,7 +11,7 @@ import {
   roundMoney,
 } from "../lib/trading-costs.js";
 import { calculateTradePlan } from "../lib/trade-calculator.js";
-import { parseEastMoneyQuote, stockSecId } from "../lib/stock-quote.js";
+import { parseEastMoneyQuote, parseTencentQuote, stockSecId, stockSymbol } from "../lib/stock-quote.js";
 
 const MOCK_RATES = {
   commissionRate: 0.0003,
@@ -107,6 +107,8 @@ test("净回款降低剩余持仓成本", () => {
 test("股票代码转换为行情市场标识", () => {
   assert.equal(stockSecId("601318"), "1.601318");
   assert.equal(stockSecId("000538"), "0.000538");
+  assert.equal(stockSymbol("601318"), "sh601318");
+  assert.equal(stockSymbol("000538"), "sz000538");
   assert.throws(() => stockSecId("60131"), /invalid_stock_code/);
 });
 
@@ -134,4 +136,31 @@ test("行情字段转换为价格和涨跌幅", () => {
   assert.equal(quote.high, 53.2);
   assert.equal(quote.low, 52.32);
   assert.equal(quote.code, "601318");
+});
+
+test("腾讯行情文本转换为实时价格", () => {
+  const fields = Array(36).fill("");
+  Object.assign(fields, {
+    0: "1",
+    1: "中国平安",
+    2: "601318",
+    3: "52.80",
+    4: "53.20",
+    5: "53.20",
+    6: "709995",
+    30: "20261030161455",
+    31: "-0.40",
+    32: "-0.75",
+    33: "53.20",
+    34: "52.32",
+    35: "52.80/709995/3737981236",
+  });
+  const quote = parseTencentQuote(`v_sh601318="${fields.join("~")}";`);
+
+  assert.equal(quote.price, 52.8);
+  assert.equal(quote.change, -0.4);
+  assert.equal(quote.changePercent, -0.75);
+  assert.equal(quote.high, 53.2);
+  assert.equal(quote.low, 52.32);
+  assert.equal(quote.name, "中国平安");
 });

@@ -2,7 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { calculateTradePlan } from "../lib/trade-calculator.js";
-import { parseEastMoneyQuote, stockSecId } from "../lib/stock-quote.js";
+import { parseEastMoneyQuote, parseTencentQuote, stockSecId, stockSymbol } from "../lib/stock-quote.js";
 import type { AShareFeeRates } from "../lib/trading-costs.js";
 
 interface Env {
@@ -119,6 +119,36 @@ async function quoteResponse(request: Request): Promise<Response> {
 
   try {
     const code = new URL(request.url).searchParams.get("code") ?? "";
+    const quote = await fetchStockQuote(code);
+    return jsonResponse(quote, 200, {
+      ...corsHeaders,
+      "Cache-Control": "public, max-age=15, s-maxage=15",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "quote_unavailable";
+    const status = message === "invalid_stock_code" ? 400 : 503;
+    return jsonResponse({ error: status === 400 ? "invalid_stock_code" : "quote_unavailable" }, status, corsHeaders);
+  }
+}
+
+async function fetchStockQuote(code: string) {
+  try {
+    const symbol = stockSymbol(code);
+    const response = await fetch(`https://qt.gtimg.cn/q=${symbol}`, {
+      headers: { Accept: "text/plain,*/*", Referer: "https://gu.qq.com/" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) throw new Error("quote_unavailable");
+
+    const bytes = await response.arrayBuffer();
+    let text: string;
+    try {
+      text = new TextDecoder("gbk").decode(bytes);
+    } catch {
+      text = new TextDecoder().decode(bytes);
+    }
+    return parseTencentQuote(text);
+  } catch {
     const secid = stockSecId(code);
     const endpoint = new URL("https://push2.eastmoney.com/api/qt/stock/get");
     endpoint.searchParams.set("secid", secid);
@@ -129,16 +159,7 @@ async function quoteResponse(request: Request): Promise<Response> {
       signal: AbortSignal.timeout(5_000),
     });
     if (!response.ok) throw new Error("quote_unavailable");
-
-    const quote = parseEastMoneyQuote(await response.json());
-    return jsonResponse(quote, 200, {
-      ...corsHeaders,
-      "Cache-Control": "public, max-age=15, s-maxage=15",
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "quote_unavailable";
-    const status = message === "invalid_stock_code" ? 400 : 503;
-    return jsonResponse({ error: status === 400 ? "invalid_stock_code" : "quote_unavailable" }, status, corsHeaders);
+    return parseEastMoneyQuote(await response.json());
   }
 }
 
