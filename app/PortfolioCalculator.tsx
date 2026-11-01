@@ -116,19 +116,6 @@ export default function PortfolioCalculator() {
 
   return (
     <main className="calculator-shell">
-      <section className="calculator-hero">
-        <div>
-          <span className="eyebrow">A 股交易测算</span>
-          <h1>做T收益计算器</h1>
-          <p>输入股数、买入价和卖出价，自动计算单笔收益；多笔买入还可以按同一价格合并卖出。</p>
-        </div>
-        <div className="rate-note" aria-label="固定交易费率">
-          <strong>费率已内置</strong>
-          <span>佣金万一 · 最低 ¥1</span>
-          <span>过户费 0.001% · 卖出印花税 0.05%</span>
-        </div>
-      </section>
-
       <section className="trade-section">
         <div className="section-heading">
           <div>
