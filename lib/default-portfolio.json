@@ -1,0 +1,37 @@
+{
+  "holdings": [
+    {
+      "symbol": "601318.SH",
+      "name": "中国平安",
+      "code": "601318",
+      "market": "上交所",
+      "referencePrice": 52.8,
+      "id": "holding-601318",
+      "baseShares": 1500,
+      "baseUnitCost": 50.987,
+      "totalCostOverride": 91777.18,
+      "lots": [
+        {
+          "id": "lot-t-001-a",
+          "batchId": "T-001-A",
+          "date": "",
+          "shares": 200,
+          "soldShares": 0,
+          "price": 52.39,
+          "sellPrice": null,
+          "applyProfitToCost": true
+        },
+        {
+          "id": "lot-t-001-b",
+          "batchId": "T-001-B",
+          "date": "",
+          "shares": 200,
+          "soldShares": 100,
+          "price": 52.42,
+          "sellPrice": null,
+          "applyProfitToCost": true
+        }
+      ]
+    }
+  ]
+}

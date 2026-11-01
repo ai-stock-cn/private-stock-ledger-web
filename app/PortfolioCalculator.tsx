@@ -20,7 +20,7 @@ type StockPreset = {
   referencePrice: number;
 };
 
-type BuyLot = {
+export type BuyLot = {
   id: string;
   batchId?: string;
   date: string;
@@ -31,7 +31,7 @@ type BuyLot = {
   applyProfitToCost?: boolean;
 };
 
-type Holding = StockPreset & {
+export type Holding = StockPreset & {
   id: string;
   baseShares: number | null;
   baseUnitCost: number | null;
@@ -39,14 +39,14 @@ type Holding = StockPreset & {
   lots: BuyLot[];
 };
 
-type FeeForm = {
+export type FeeForm = {
   commissionPercent: number;
   minimumCommission: number;
   transferFeePercent: number;
   stampDutyPercent: number;
 };
 
-type SavedPortfolio = {
+export type SavedPortfolio = {
   version: 7;
   holdings: Holding[];
   fees: FeeForm;
@@ -79,51 +79,25 @@ const STOCK_PRESETS: StockPreset[] = [
   { symbol: "601088.SH", name: "中国神华", code: "601088", market: "上交所", referencePrice: 51.99 },
 ];
 
-const DEFAULT_FEES: FeeForm = {
+export const DEFAULT_FEES: FeeForm = {
   commissionPercent: 0.01,
   minimumCommission: 1,
   transferFeePercent: 0.001,
   stampDutyPercent: 0.05,
 };
-const DEFAULT_HOLDINGS: Holding[] = [
-  {
-    ...STOCK_PRESETS[0],
-    id: "holding-601318",
-    baseShares: 1500,
-    baseUnitCost: 50.987,
-    totalCostOverride: 91777.18,
-    lots: [
-      {
-        id: "lot-t-001-a",
-        batchId: "T-001-A",
-        date: "",
-        shares: 200,
-        soldShares: 0,
-        price: 52.39,
-        sellPrice: null,
-        applyProfitToCost: true,
-      },
-      {
-        id: "lot-t-001-b",
-        batchId: "T-001-B",
-        date: "",
-        shares: 200,
-        soldShares: 100,
-        price: 52.42,
-        sellPrice: null,
-        applyProfitToCost: true,
-      },
-    ],
-  },
-];
 const STORAGE_KEY = "private-stock-portfolio-v7";
 const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v6", "private-stock-portfolio-v5", "private-stock-portfolio-v4", "private-stock-portfolio-v3", "private-stock-portfolio-v2", "private-stock-portfolio-v1"];
 const money = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const precisePrice = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
 
-export default function PortfolioCalculator() {
-  const [holdings, setHoldings] = useState<Holding[]>(DEFAULT_HOLDINGS);
+type PortfolioCalculatorProps = {
+  initialHoldings?: Holding[];
+  onLogout?: () => void;
+};
+
+export default function PortfolioCalculator({ initialHoldings = [], onLogout }: PortfolioCalculatorProps) {
+  const [holdings, setHoldings] = useState<Holding[]>(initialHoldings);
   const [fees, setFees] = useState<FeeForm>(DEFAULT_FEES);
   const [selectedSymbol, setSelectedSymbol] = useState(STOCK_PRESETS[1].symbol);
   const [isReady, setIsReady] = useState(false);
@@ -232,7 +206,13 @@ export default function PortfolioCalculator() {
         </div>
         <div className="topbar-actions">
           <div className="save-status"><i />{savedAt ? `本机已保存 ${savedAt}` : "数据仅保存在本机"}</div>
-          <form action="/auth/logout" method="post"><button className="logout-button" type="submit">退出登录</button></form>
+          <form
+            action={onLogout ? undefined : "/auth/logout"}
+            method={onLogout ? undefined : "post"}
+            onSubmit={onLogout ? (event) => { event.preventDefault(); onLogout(); } : undefined}
+          >
+            <button className="logout-button" type="submit">退出登录</button>
+          </form>
         </div>
       </header>
 
