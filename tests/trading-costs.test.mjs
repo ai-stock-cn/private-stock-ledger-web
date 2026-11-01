@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   calculateBuyTransaction,
+  calculateProfitAtPrice,
   calculateSellTransaction,
   findMinimumProfitableSale,
   findMinimumProfitableSaleWithFixedFee,
@@ -42,4 +43,15 @@ test("按台账实际费用计算两笔T仓最低盈利卖价", () => {
   assert.equal(second?.minimumProfitPrice, 52.47);
   assert.equal(combined?.minimumProfitPrice, 52.45);
   assert.equal(combined?.profit, 2.58);
+});
+
+test("中国平安1800股按整仓成本和收盘价计算盈亏", () => {
+  const totalCost = 1800 * 50.987;
+  const current = calculateProfitAtPrice(1800, totalCost, 52.8);
+  const minimum = findMinimumProfitableSale(1800, totalCost);
+
+  assert.equal(totalCost, 91776.6);
+  assert.equal(current.totalFees, 57.97);
+  assert.equal(current.profit, 3205.43);
+  assert.equal(minimum?.minimumProfitPrice, 51.02);
 });
