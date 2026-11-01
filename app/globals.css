@@ -182,30 +182,54 @@ button { color: inherit; }
 .base-copy h3, .lot-heading h3 { margin: 4px 0 5px; font: 500 22px Georgia, "Songti SC", serif; }
 .base-copy p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
 .base-panel label, .fee-settings label { display: grid; gap: 7px; color: var(--muted); font-size: 9px; }
-.base-panel input, .lot-table input, .fee-settings input { width: 100%; border: 1px solid rgba(10,18,34,.13); border-radius: 10px; outline: none; background: white; color: var(--ink); font-family: ui-monospace, monospace; }
+.base-panel input, .lot-table input, .bulk-sale-panel input, .fee-settings input { width: 100%; border: 1px solid rgba(10,18,34,.13); border-radius: 10px; outline: none; background: white; color: var(--ink); font-family: ui-monospace, monospace; }
 .base-panel input { height: 42px; padding: 0 11px; font-size: 12px; }
-.base-panel input:focus, .lot-table input:focus, .fee-settings input:focus { border-color: #5b78b6; box-shadow: 0 0 0 3px rgba(121,168,255,.18); }
+.base-panel input:focus, .lot-table input:focus, .bulk-sale-panel input:focus, .fee-settings input:focus { border-color: #5b78b6; box-shadow: 0 0 0 3px rgba(121,168,255,.18); }
 .base-total { padding: 11px 13px; border-radius: 11px; background: white; }
 .base-total span, .base-total strong { display: block; }
 .base-total span { color: var(--muted); font-size: 9px; }
 .base-total strong { margin-top: 5px; font: 800 13px ui-monospace, monospace; }
 
+.bulk-sale-panel {
+  display: grid;
+  grid-template-columns: minmax(260px,1.15fr) minmax(300px,1fr) minmax(220px,.8fr);
+  gap: 16px;
+  margin: 0 24px 24px;
+  padding: 18px;
+  border: 1px solid rgba(48,113,84,.22);
+  border-radius: 20px;
+  background: linear-gradient(110deg, rgba(215,255,99,.3), rgba(220,233,255,.45));
+}
+.bulk-sale-highlight, .bulk-sale-result { padding: 4px 6px; }
+.bulk-sale-highlight span, .bulk-sale-highlight strong, .bulk-sale-highlight small, .bulk-sale-result span, .bulk-sale-result strong, .bulk-sale-result small { display: block; }
+.bulk-sale-highlight span, .bulk-sale-result span { color: var(--muted); font-size: 9px; }
+.bulk-sale-highlight strong { margin: 6px 0 5px; color: var(--green); font: 900 clamp(27px,3vw,40px) ui-monospace, monospace; }
+.bulk-sale-highlight small, .bulk-sale-result small { color: var(--muted); font-size: 8px; line-height: 1.6; }
+.bulk-sale-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bulk-sale-form label { display: grid; gap: 6px; color: var(--muted); font-size: 8px; }
+.bulk-sale-form input { height: 38px; padding: 0 10px; text-align: right; }
+.fill-all-button { grid-column: 1 / -1; min-height: 34px; border: 1px solid rgba(10,18,34,.12); border-radius: 10px; background: rgba(255,255,255,.7); font-size: 9px; font-weight: 700; cursor: pointer; }
+.bulk-sale-result strong { margin: 6px 0 5px; font: 800 21px ui-monospace, monospace; }
+.bulk-sale-result > button { width: 100%; min-height: 36px; margin-top: 10px; border: 0; border-radius: 10px; background: var(--ink); color: white; font-size: 10px; font-weight: 800; cursor: pointer; }
+.bulk-sale-result > button:disabled { opacity: .35; cursor: not-allowed; }
+.positive-text { color: var(--green); }
+.negative-text { color: var(--red); }
+
 .lot-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 28px 16px; }
 .lot-heading button { min-height: 38px; border-radius: 10px; }
 .empty-lots { margin: 0 24px 24px; padding: 24px; border: 1px dashed rgba(10,18,34,.18); border-radius: 16px; color: var(--muted); font-size: 11px; text-align: center; }
 .lot-table-wrap { overflow-x: auto; padding: 0 24px 24px; }
-.lot-table { width: 100%; min-width: 1500px; border-collapse: collapse; table-layout: fixed; }
+.lot-table { width: 100%; min-width: 1240px; border-collapse: collapse; table-layout: fixed; }
 .lot-table th, .lot-table td { padding: 12px 9px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: middle; }
 .lot-table th { color: #7c8799; font-size: 8px; font-weight: 600; }
 .lot-table td { font: 11px ui-monospace, monospace; }
 .lot-table th:first-child, .lot-table td:first-child { width: 132px; text-align: left; }
-.lot-table th:nth-child(2), .lot-table td:nth-child(2) { width: 86px; }
-.lot-table th:nth-child(3), .lot-table td:nth-child(3), .lot-table th:nth-child(4), .lot-table td:nth-child(4) { width: 78px; }
-.lot-table th:nth-child(5), .lot-table td:nth-child(5), .lot-table th:nth-child(6), .lot-table td:nth-child(6) { width: 105px; }
-.lot-table th:nth-child(7), .lot-table td:nth-child(7), .lot-table th:nth-child(8), .lot-table td:nth-child(8) { width: 112px; }
-.lot-table th:nth-child(9), .lot-table td:nth-child(9) { width: 142px; }
-.lot-table th:nth-child(10), .lot-table td:nth-child(10), .lot-table th:nth-child(11), .lot-table td:nth-child(11) { width: 126px; }
-.lot-table th:last-child, .lot-table td:last-child { width: 42px; }
+.lot-table th:nth-child(2), .lot-table td:nth-child(2), .lot-table th:nth-child(3), .lot-table td:nth-child(3) { width: 92px; }
+.lot-table th:nth-child(4), .lot-table td:nth-child(4) { width: 116px; }
+.lot-table th:nth-child(5), .lot-table td:nth-child(5) { width: 132px; background: rgba(215,255,99,.16); }
+.lot-table th:nth-child(6), .lot-table td:nth-child(6), .lot-table th:nth-child(7), .lot-table td:nth-child(7) { width: 112px; }
+.lot-table th:nth-child(8), .lot-table td:nth-child(8), .lot-table th:nth-child(9), .lot-table td:nth-child(9) { width: 118px; }
+.lot-table th:last-child, .lot-table td:last-child { width: 126px; }
 .lot-table input { height: 34px; padding: 0 7px; text-align: right; }
 .lot-table input[type="date"] { text-align: left; }
 .lot-table input:disabled { background: #f1f2ee; color: #9aa2af; cursor: not-allowed; }
@@ -213,24 +237,23 @@ button { color: inherit; }
 .lot-table td strong, .lot-table td small { display: block; }
 .lot-table td small { margin-top: 4px; color: var(--muted); font-size: 8px; }
 .auto-fee strong { color: #33425b; }
-.realized-profit > strong { font-size: 13px; }
-.apply-profit-toggle { display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px; margin-top: 6px; color: var(--muted); font: 8px "PingFang SC", sans-serif; cursor: pointer; }
-.apply-profit-toggle input { width: 13px; height: 13px; padding: 0; accent-color: var(--green); }
 .profit-price strong { color: var(--green); font-size: 14px; }
 .delete-lot { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f0f1ed; color: var(--muted); cursor: pointer; }
+.lot-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.confirm-sale { min-height: 30px; padding: 0 9px; border: 0; border-radius: 8px; background: var(--ink); color: white; font-size: 8px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.confirm-sale:disabled { opacity: .3; cursor: not-allowed; }
 
-.cost-adjustment { margin: 0 24px 24px; overflow: hidden; border: 1px solid rgba(10,18,34,.11); border-radius: 18px; background: #f8f9f4; }
-.cost-adjustment-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
-.cost-adjustment-head h3 { margin: 4px 0 0; font: 500 21px Georgia, "Songti SC", serif; }
-.cost-adjustment-head p { max-width: 440px; margin: 0; color: var(--muted); font-size: 8px; line-height: 1.65; text-align: right; }
-.cost-adjustment-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
-.cost-adjustment-grid > div { min-height: 112px; padding: 18px 20px; border-right: 1px solid var(--line); }
-.cost-adjustment-grid > div:last-child { border-right: 0; }
-.cost-adjustment-grid span, .cost-adjustment-grid strong, .cost-adjustment-grid small { display: block; }
-.cost-adjustment-grid span { color: var(--muted); font-size: 9px; }
-.cost-adjustment-grid strong { margin: 10px 0 5px; font: 800 clamp(16px,1.8vw,22px) ui-monospace, monospace; }
-.cost-adjustment-grid small { color: var(--muted); font-size: 8px; line-height: 1.5; }
-.cost-adjustment-grid .summary-focus { background: rgba(215,255,99,.34); }
+.sold-trades { margin: 0 24px 24px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #f8f9f5; }
+.sold-trades-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.sold-trades-head h3 { margin: 4px 0 0; font: 500 21px Georgia, "Songti SC", serif; }
+.sold-trades-head p { max-width: 460px; margin: 0; color: var(--muted); font-size: 8px; line-height: 1.6; text-align: right; }
+.sold-table-wrap { overflow-x: auto; }
+.sold-table { width: 100%; min-width: 900px; border-collapse: collapse; }
+.sold-table th, .sold-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; font: 10px ui-monospace, monospace; }
+.sold-table th { color: #7c8799; font-size: 8px; font-weight: 600; }
+.sold-table th:first-child, .sold-table td:first-child, .sold-table th:nth-child(2), .sold-table td:nth-child(2) { text-align: left; }
+.sold-table tr:last-child td { border-bottom: 0; }
+.sold-table small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; }
 
 .position-summary { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); border-top: 1px solid var(--line); }
 .position-summary > div { min-height: 116px; padding: 20px; border-right: 1px solid var(--line); }
@@ -281,13 +304,11 @@ button { color: inherit; }
   .base-copy, .base-total { grid-column: 1 / -1; }
   .lot-heading { padding-inline: 18px; }
   .lot-table-wrap { padding-inline: 14px; }
-  .cost-adjustment { margin-inline: 14px; }
-  .cost-adjustment-head { display: block; }
-  .cost-adjustment-head p { max-width: none; margin-top: 9px; text-align: left; }
-  .cost-adjustment-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .cost-adjustment-grid > div { border-bottom: 1px solid var(--line); }
-  .cost-adjustment-grid > div:nth-child(even) { border-right: 0; }
-  .cost-adjustment-grid > div:nth-last-child(-n+2) { border-bottom: 0; }
+  .bulk-sale-panel { grid-template-columns: 1fr 1fr; margin-inline: 14px; }
+  .bulk-sale-result { grid-column: 1 / -1; }
+  .sold-trades { margin-inline: 14px; }
+  .sold-trades-head { display: block; }
+  .sold-trades-head p { max-width: none; margin-top: 8px; text-align: left; }
   .position-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .position-summary > div { border-bottom: 1px solid var(--line); }
   .position-summary > div:nth-child(even) { border-right: 0; }
@@ -306,9 +327,10 @@ button { color: inherit; }
   .base-panel { grid-template-columns: 1fr; }
   .base-copy, .base-total { grid-column: auto; }
   .lot-heading { align-items: end; }
-  .cost-adjustment-grid { grid-template-columns: 1fr; }
-  .cost-adjustment-grid > div, .cost-adjustment-grid > div:nth-last-child(-n+2) { border-right: 0; border-bottom: 1px solid var(--line); }
-  .cost-adjustment-grid > div:last-child { border-bottom: 0; }
+  .bulk-sale-panel { grid-template-columns: 1fr; }
+  .bulk-sale-result { grid-column: auto; }
+  .bulk-sale-form { grid-template-columns: 1fr; }
+  .fill-all-button { grid-column: auto; }
   .position-summary { grid-template-columns: 1fr; }
   .position-summary > div, .position-summary > div:last-child { grid-column: auto; border-right: 0; border-bottom: 1px solid var(--line); }
   .position-summary > div:last-child { border-bottom: 0; }

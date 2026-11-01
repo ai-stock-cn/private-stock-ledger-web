@@ -10,26 +10,27 @@
       "baseShares": 1500,
       "baseUnitCost": 50.987,
       "totalCostOverride": 91777.18,
+      "soldTrades": [],
       "lots": [
         {
           "id": "lot-t-001-a",
           "batchId": "T-001-A",
           "date": "",
           "shares": 200,
-          "soldShares": 0,
           "price": 52.39,
-          "sellPrice": null,
-          "applyProfitToCost": true
+          "buyFee": 1.15,
+          "draftSellShares": null,
+          "draftSellPrice": null
         },
         {
           "id": "lot-t-001-b",
           "batchId": "T-001-B",
           "date": "",
-          "shares": 200,
-          "soldShares": 100,
+          "shares": 100,
           "price": 52.42,
-          "sellPrice": null,
-          "applyProfitToCost": true
+          "buyFee": 0.575,
+          "draftSellShares": null,
+          "draftSellPrice": null
         }
       ]
     }

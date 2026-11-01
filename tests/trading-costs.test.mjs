@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   calculateAdjustedHoldingCosts,
+  calculateBrokerAdjustedPosition,
   calculateBuyTransaction,
+  calculateFifoSale,
   calculateProfitAtPrice,
   calculateRealizedLotSale,
   calculateRemainingLotCost,
@@ -97,4 +99,29 @@ test("中国平安1800股按整仓成本和收盘价计算盈亏", () => {
   assert.equal(current.totalFees, 57.97);
   assert.equal(current.profit, 3204.85);
   assert.equal(minimum?.minimumProfitPrice, 51.02);
+});
+
+test("多批次一起卖只计算一笔卖出费用并按先进先出分摊成本", () => {
+  const sale = calculateFifoSale([
+    { id: "A", shares: 200, price: 52.39, buyFee: 1.15 },
+    { id: "B", shares: 100, price: 52.42, buyFee: 0.575 },
+  ], 300, 52.8);
+
+  assert.ok(sale);
+  assert.equal(sale.shares, 300);
+  assert.equal(sale.allocations.length, 2);
+  assert.equal(sale.totalFees, 9.66);
+  assert.equal(sale.soldCost, 15721.73);
+  assert.equal(sale.profit, 108.61);
+});
+
+test("确认卖出后按券商T口径用净回款降低剩余持仓成本", () => {
+  const sale = calculateFifoSale([
+    { id: "B", shares: 100, price: 52.42, buyFee: 0.575 },
+  ], 100, 52.8);
+  assert.ok(sale);
+
+  const adjusted = calculateBrokerAdjustedPosition(91777.18, sale.netProceeds, 1700);
+  assert.equal(adjusted.adjustedTotalCost, 86500.87);
+  assert.equal(roundMoney(adjusted.adjustedUnitCost), 50.88);
 });

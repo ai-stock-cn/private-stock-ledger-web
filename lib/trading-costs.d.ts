@@ -34,6 +34,28 @@ export type RealizedLotSale = SellTransaction & {
   profit: number;
 };
 
+export type FifoSaleAllocation = {
+  id: string;
+  shares: number;
+  buyPrice: number;
+  allocatedBuyFee: number;
+  soldCost: number;
+  remainingShares: number;
+  remainingBuyFee: number;
+};
+
+export type FifoSale = SellTransaction & {
+  requestedShares: number;
+  shares: number;
+  sellPrice: number;
+  soldCost: number;
+  allocatedBuyFee: number;
+  averageBuyPrice: number;
+  profit: number;
+  allocations: FifoSaleAllocation[];
+  fullyAllocated: boolean;
+};
+
 export type AdjustedHoldingCosts = {
   baseCostBeforeAdjustment: number;
   baseUnitCostBeforeAdjustment: number;
@@ -70,6 +92,8 @@ export function calculateBuyTransaction(shares: number, price: number, rates?: A
 export function calculateRemainingLotCost(shares: number, price: number, totalBuyFee: number, soldShares?: number): RemainingLotCost;
 export function calculateSellTransaction(shares: number, price: number, rates?: AShareFeeRates): SellTransaction;
 export function calculateRealizedLotSale(soldShares: number, buyPrice: number, allocatedBuyFee: number, sellPrice: number, rates?: AShareFeeRates): RealizedLotSale | null;
+export function calculateFifoSale(lots: Array<{ id: string; shares: number; price: number; buyFee: number }>, soldShares: number, sellPrice: number, rates?: AShareFeeRates): FifoSale | null;
+export function calculateBrokerAdjustedPosition(totalCost: number, netSaleProceeds: number, remainingShares: number): { adjustedTotalCost: number; adjustedUnitCost: number };
 export function calculateAdjustedHoldingCosts(totalCost: number, baseShares: number, totalShares: number, remainingLotCost: number, realizedProfit: number): AdjustedHoldingCosts;
 export function findMinimumProfitableSale(shares: number, totalCost: number, rates?: AShareFeeRates): MinimumProfitableSale | null;
 export function findMinimumProfitableSaleWithFixedFee(shares: number, totalCost: number, fixedSellFee: number, priceTick?: number): MinimumProfitableSale | null;
