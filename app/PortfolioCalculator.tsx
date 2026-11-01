@@ -10,6 +10,7 @@ import {
 
 type TradeInput = {
   id: string;
+  stockName?: string;
   shares: string;
   buyPrice: string;
   sellPrice: string;
@@ -23,12 +24,22 @@ const FIXED_RATES: AShareFeeRates = {
   priceTick: 0.01,
 };
 
-const INITIAL_TRADE: TradeInput = {
-  id: "trade-1",
-  shares: "",
-  buyPrice: "",
-  sellPrice: "",
-};
+const INITIAL_TRADES: TradeInput[] = [
+  {
+    id: "ping-an-1",
+    stockName: "中国平安",
+    shares: "200",
+    buyPrice: "52.39",
+    sellPrice: "",
+  },
+  {
+    id: "ping-an-2",
+    stockName: "中国平安",
+    shares: "100",
+    buyPrice: "52.42",
+    sellPrice: "",
+  },
+];
 
 const money = new Intl.NumberFormat("zh-CN", {
   minimumFractionDigits: 2,
@@ -41,7 +52,7 @@ const price = new Intl.NumberFormat("zh-CN", {
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
 
 export default function PortfolioCalculator() {
-  const [trades, setTrades] = useState<TradeInput[]>([INITIAL_TRADE]);
+  const [trades, setTrades] = useState<TradeInput[]>(() => initialTrades());
   const [combinedSellPrice, setCombinedSellPrice] = useState("");
 
   const calculations = useMemo(() => trades.map((trade) => {
@@ -65,6 +76,7 @@ export default function PortfolioCalculator() {
     const validRows = calculations.filter((item) => item.buy);
     const totalShares = validRows.reduce((sum, item) => sum + item.shares, 0);
     const totalCost = validRows.reduce((sum, item) => sum + (item.buy?.totalCost ?? 0), 0);
+    const totalBuyAmount = validRows.reduce((sum, item) => sum + (item.buy?.grossAmount ?? 0), 0);
     const targetPrice = positiveNumber(combinedSellPrice);
     const sale = totalShares && totalCost && targetPrice
       ? calculateProfitAtPrice(totalShares, totalCost, targetPrice, FIXED_RATES)
@@ -81,6 +93,7 @@ export default function PortfolioCalculator() {
     return {
       totalShares,
       totalCost,
+      totalBuyAmount,
       targetPrice,
       sale,
       minimum,
@@ -89,7 +102,7 @@ export default function PortfolioCalculator() {
     };
   }, [calculations, combinedSellPrice]);
 
-  function updateTrade(id: string, field: keyof Omit<TradeInput, "id">, value: string) {
+  function updateTrade(id: string, field: "shares" | "buyPrice" | "sellPrice", value: string) {
     setTrades((current) => current.map((trade) => (
       trade.id === id ? { ...trade, [field]: value } : trade
     )));
@@ -105,12 +118,12 @@ export default function PortfolioCalculator() {
   function removeTrade(id: string) {
     setTrades((current) => {
       const next = current.filter((trade) => trade.id !== id);
-      return next.length ? next : [{ ...INITIAL_TRADE, id: createId() }];
+      return next.length ? next : [{ id: createId(), shares: "", buyPrice: "", sellPrice: "" }];
     });
   }
 
   function resetCalculator() {
-    setTrades([{ ...INITIAL_TRADE }]);
+    setTrades(initialTrades());
     setCombinedSellPrice("");
   }
 
@@ -132,7 +145,7 @@ export default function PortfolioCalculator() {
           {calculations.map(({ trade, buy, sale, minimum }, index) => (
             <article className="trade-card" key={trade.id}>
               <div className="trade-title">
-                <span>第 {String(index + 1).padStart(2, "0")} 笔</span>
+                <span>{trade.stockName ? `${trade.stockName} · ` : ""}第 {String(index + 1).padStart(2, "0")} 笔</span>
                 {trades.length > 1 ? (
                   <button type="button" onClick={() => removeTrade(trade.id)} aria-label={`删除第 ${index + 1} 笔`}>
                     删除
@@ -190,9 +203,6 @@ export default function PortfolioCalculator() {
 
               <div className="result-grid">
                 <ResultItem label="买入金额" value={buy ? `¥${money.format(buy.grossAmount)}` : "—"} />
-                <ResultItem label="买入费用" value={buy ? `¥${money.format(buy.totalFees)}` : "—"} />
-                <ResultItem label="含费成本" value={buy ? `¥${money.format(buy.totalCost)}` : "—"} />
-                <ResultItem label="卖出费用" value={sale ? `¥${money.format(sale.totalFees)}` : "—"} />
                 <ResultItem
                   label="不亏卖价"
                   value={minimum ? `¥${price.format(minimum.minimumProfitPrice)}` : "—"}
@@ -247,8 +257,7 @@ export default function PortfolioCalculator() {
           </div>
           <div className="combined-details">
             <ResultItem label="合计股数" value={combined.totalShares ? `${integer.format(combined.totalShares)} 股` : "—"} />
-            <ResultItem label="含费总成本" value={combined.totalCost ? `¥${money.format(combined.totalCost)}` : "—"} />
-            <ResultItem label="一起卖费用" value={combined.sale ? `¥${money.format(combined.sale.totalFees)}` : "—"} />
+            <ResultItem label="总买入金额" value={combined.totalBuyAmount ? `¥${money.format(combined.totalBuyAmount)}` : "—"} />
             <ResultItem
               label="一起卖不亏价"
               value={combined.minimum ? `¥${price.format(combined.minimum.minimumProfitPrice)}` : "—"}
@@ -264,7 +273,7 @@ export default function PortfolioCalculator() {
       </section>
 
       <footer>
-        计算口径：买入含佣金与过户费；卖出含佣金、过户费与印花税。结果用于交易计划参考，请以券商最终交割单为准。
+        买卖费用已按内置费率自动计入，结果用于交易计划参考，请以券商最终交割单为准。
       </footer>
     </main>
   );
@@ -306,4 +315,8 @@ function createId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `trade-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function initialTrades() {
+  return INITIAL_TRADES.map((trade) => ({ ...trade }));
 }

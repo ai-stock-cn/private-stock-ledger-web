@@ -228,7 +228,7 @@ label > span {
 
 .result-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 20px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -357,18 +357,6 @@ footer {
     grid-template-columns: 1fr;
   }
 
-  .result-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .result-item:nth-child(3) {
-    border-right: 0;
-  }
-
-  .result-item:nth-child(-n + 3) {
-    border-bottom: 1px solid var(--line);
-  }
-
   .combined-results {
     grid-template-columns: 1fr;
   }
@@ -414,20 +402,16 @@ footer {
   }
 
   .result-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .result-item,
   .result-item:nth-child(3) {
-    border-right: 1px solid var(--line);
+    border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
-  .result-item:nth-child(even) {
-    border-right: 0;
-  }
-
-  .result-item:nth-last-child(-n + 2) {
+  .result-item:last-child {
     border-bottom: 0;
   }
 
@@ -445,7 +429,4 @@ footer {
     padding: 10px;
   }
 
-  .combined-details .result-item:nth-last-child(2) {
-    border-bottom: 1px solid var(--line);
-  }
 }
