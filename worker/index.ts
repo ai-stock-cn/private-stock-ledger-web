@@ -2,6 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { calculateTradePlan } from "../lib/trade-calculator.js";
+import { parseEastMoneyQuote, stockSecId } from "../lib/stock-quote.js";
 import type { AShareFeeRates } from "../lib/trading-costs.js";
 
 interface Env {
@@ -43,6 +44,10 @@ const worker = {
       return calculateResponse(request, env);
     }
 
+    if (url.pathname === "/api/quote") {
+      return quoteResponse(request);
+    }
+
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
@@ -59,7 +64,7 @@ const worker = {
 };
 
 async function calculateResponse(request: Request, env: Env): Promise<Response> {
-  const corsHeaders = apiCorsHeaders(request);
+  const corsHeaders = apiCorsHeaders(request, "POST, OPTIONS");
 
   if (!isAllowedApiOrigin(request)) {
     return jsonResponse({ error: "origin_not_allowed" }, 403);
@@ -93,20 +98,64 @@ async function calculateResponse(request: Request, env: Env): Promise<Response> 
   }
 }
 
+async function quoteResponse(request: Request): Promise<Response> {
+  const corsHeaders = apiCorsHeaders(request, "GET, OPTIONS");
+
+  if (!isAllowedApiOrigin(request)) {
+    return jsonResponse({ error: "origin_not_allowed" }, 403);
+  }
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  if (request.method !== "GET") {
+    return jsonResponse({ error: "method_not_allowed" }, 405, { ...corsHeaders, Allow: "GET, OPTIONS" });
+  }
+
+  if (!allowRequest(request)) {
+    return jsonResponse({ error: "too_many_requests" }, 429, { ...corsHeaders, "Retry-After": "60" });
+  }
+
+  try {
+    const code = new URL(request.url).searchParams.get("code") ?? "";
+    const secid = stockSecId(code);
+    const endpoint = new URL("https://push2.eastmoney.com/api/qt/stock/get");
+    endpoint.searchParams.set("secid", secid);
+    endpoint.searchParams.set("fields", "f57,f58,f43,f44,f45,f46,f47,f48,f60,f169,f170,f86");
+
+    const response = await fetch(endpoint, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) throw new Error("quote_unavailable");
+
+    const quote = parseEastMoneyQuote(await response.json());
+    return jsonResponse(quote, 200, {
+      ...corsHeaders,
+      "Cache-Control": "public, max-age=15, s-maxage=15",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "quote_unavailable";
+    const status = message === "invalid_stock_code" ? 400 : 503;
+    return jsonResponse({ error: status === 400 ? "invalid_stock_code" : "quote_unavailable" }, status, corsHeaders);
+  }
+}
+
 function isAllowedApiOrigin(request: Request): boolean {
   const origin = request.headers.get("Origin");
   if (!origin) return true;
   return origin === new URL(request.url).origin || PUBLIC_API_ORIGINS.has(origin);
 }
 
-function apiCorsHeaders(request: Request): Record<string, string> {
+function apiCorsHeaders(request: Request, methods: string): Record<string, string> {
   const origin = request.headers.get("Origin");
   if (!origin || !isAllowedApiOrigin(request)) return {};
 
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": methods,
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };

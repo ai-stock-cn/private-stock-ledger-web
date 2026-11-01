@@ -11,6 +11,7 @@ import {
   roundMoney,
 } from "../lib/trading-costs.js";
 import { calculateTradePlan } from "../lib/trade-calculator.js";
+import { parseEastMoneyQuote, stockSecId } from "../lib/stock-quote.js";
 
 const MOCK_RATES = {
   commissionRate: 0.0003,
@@ -101,4 +102,36 @@ test("净回款降低剩余持仓成本", () => {
 
   assert.equal(adjusted.adjustedTotalCost, 3903.4);
   assert.equal(roundMoney(adjusted.adjustedUnitCost), 9.76);
+});
+
+test("股票代码转换为行情市场标识", () => {
+  assert.equal(stockSecId("601318"), "1.601318");
+  assert.equal(stockSecId("000538"), "0.000538");
+  assert.throws(() => stockSecId("60131"), /invalid_stock_code/);
+});
+
+test("行情字段转换为价格和涨跌幅", () => {
+  const quote = parseEastMoneyQuote({
+    data: {
+      f43: 5280,
+      f44: 5320,
+      f45: 5232,
+      f46: 5320,
+      f47: 709995,
+      f48: 3737981236,
+      f57: "601318",
+      f58: "中国平安",
+      f60: 5320,
+      f86: 1793347915,
+      f169: -40,
+      f170: -75,
+    },
+  });
+
+  assert.equal(quote.price, 52.8);
+  assert.equal(quote.change, -0.4);
+  assert.equal(quote.changePercent, -0.75);
+  assert.equal(quote.high, 53.2);
+  assert.equal(quote.low, 52.32);
+  assert.equal(quote.code, "601318");
 });

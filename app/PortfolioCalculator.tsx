@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type TradeInput = {
   id: string;
@@ -24,6 +24,8 @@ type StoredLedgers = {
 
 const STORAGE_KEY = "stock-profit-calculator-v2";
 const GITHUB_PAGES_API = "https://private-stock-ledger.pastelbear20.chatgpt.site/api/calculate";
+const GITHUB_PAGES_QUOTE_API = "https://private-stock-ledger.pastelbear20.chatgpt.site/api/quote";
+const QUOTE_REFRESH_MS = 60_000;
 
 const INITIAL_STOCKS: StockLedger[] = [
   {
@@ -65,6 +67,21 @@ type CalculationResult = {
   };
 };
 
+type StockQuote = {
+  code: string;
+  name: string;
+  price: number;
+  previousClose: number;
+  change: number;
+  changePercent: number;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  volume: number | null;
+  amount: number | null;
+  updatedAt: string;
+};
+
 export default function PortfolioCalculator() {
   const [stocks, setStocks] = useState<StockLedger[]>(() => initialStocks());
   const [selectedStockId, setSelectedStockId] = useState(INITIAL_STOCKS[0].id);
@@ -73,6 +90,9 @@ export default function PortfolioCalculator() {
   const [pendingFullSale, setPendingFullSale] = useState(false);
   const [calculation, setCalculation] = useState<CalculationResult | null>(null);
   const [calculationError, setCalculationError] = useState(false);
+  const [quote, setQuote] = useState<StockQuote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
   const selectedStock = stocks.find((stock) => stock.id === selectedStockId) ?? stocks[0]!;
 
   useEffect(() => {
@@ -92,6 +112,34 @@ export default function PortfolioCalculator() {
     if (!storageReady) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ stocks, selectedStockId }));
   }, [selectedStockId, storageReady, stocks]);
+
+  const refreshQuote = useCallback(async () => {
+    const code = selectedStock.code.trim();
+    if (!/^\d{6}$/.test(code)) {
+      setQuote(null);
+      setQuoteError(false);
+      return;
+    }
+
+    setQuoteLoading(true);
+    try {
+      const response = await fetch(quoteEndpoint(code), { cache: "no-store" });
+      if (!response.ok) throw new Error("quote_failed");
+      setQuote(await response.json() as StockQuote);
+      setQuoteError(false);
+    } catch {
+      setQuoteError(true);
+    } finally {
+      setQuoteLoading(false);
+    }
+  }, [selectedStock.code]);
+
+  useEffect(() => {
+    setQuote(null);
+    void refreshQuote();
+    const interval = window.setInterval(() => void refreshQuote(), QUOTE_REFRESH_MS);
+    return () => window.clearInterval(interval);
+  }, [refreshQuote]);
 
   const requestPayload = useMemo(() => ({
     trades: selectedStock.trades.map((trade) => ({
@@ -284,6 +332,13 @@ export default function PortfolioCalculator() {
             <span>数据仅保存在当前浏览器</span>
           </div>
         </div>
+        <LiveQuotePanel
+          quote={quote}
+          loading={quoteLoading}
+          error={quoteError}
+          code={selectedStock.code}
+          onRefresh={() => void refreshQuote()}
+        />
       </section>
 
       <section className="trade-section">
@@ -483,6 +538,73 @@ export default function PortfolioCalculator() {
   );
 }
 
+function LiveQuotePanel({
+  quote,
+  loading,
+  error,
+  code,
+  onRefresh,
+}: {
+  quote: StockQuote | null;
+  loading: boolean;
+  error: boolean;
+  code: string;
+  onRefresh: () => void;
+}) {
+  const validCode = /^\d{6}$/.test(code.trim());
+  const tone = quoteTone(quote?.change);
+
+  return (
+    <div className="live-quote" aria-live="polite">
+      <div className="live-quote-heading">
+        <div>
+          <span className="eyebrow">实时行情 · 每60秒自动刷新</span>
+          <strong>{quote?.name || (validCode ? "正在获取行情" : "请输入六位股票代码")}</strong>
+        </div>
+        <button type="button" onClick={onRefresh} disabled={!validCode || loading}>
+          {loading ? "刷新中" : "刷新行情"}
+        </button>
+      </div>
+
+      {quote ? (
+        <div className="live-quote-body">
+          <div className="quote-price">
+            <span>最新价</span>
+            <strong className={tone}>¥{money.format(quote.price)}</strong>
+            <small className={tone}>
+              {signedNumber(quote.change)} · {signedPercent(quote.changePercent)}
+            </small>
+          </div>
+          <div className="quote-stats">
+            <QuoteMetric label="开盘" value={quote.open} />
+            <QuoteMetric label="最高" value={quote.high} />
+            <QuoteMetric label="最低" value={quote.low} />
+            <QuoteMetric label="昨收" value={quote.previousClose} />
+          </div>
+          <div className="quote-time">
+            <span>行情时间</span>
+            <strong>{formatQuoteTime(quote.updatedAt)}</strong>
+            <small>行情可能存在延迟，仅供交易计划参考</small>
+          </div>
+        </div>
+      ) : (
+        <div className={`quote-placeholder${error ? " error" : ""}`}>
+          {error ? "暂时无法获取行情，请稍后重试。" : validCode ? "正在加载最新价格…" : "填写股票代码后自动加载行情。"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuoteMetric({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value === null ? "—" : `¥${money.format(value)}`}</strong>
+    </div>
+  );
+}
+
 function ResultItem({
   label,
   value,
@@ -523,8 +645,39 @@ function profitTone(value?: number): "positive" | "negative" | undefined {
   return value > 0 ? "positive" : "negative";
 }
 
+function quoteTone(value?: number): "positive" | "negative" | "flat" {
+  if (!value) return "flat";
+  return value > 0 ? "positive" : "negative";
+}
+
+function signedNumber(value: number) {
+  return `${value > 0 ? "+" : value < 0 ? "−" : ""}${money.format(Math.abs(value))}`;
+}
+
+function signedPercent(value: number) {
+  return `${value > 0 ? "+" : value < 0 ? "−" : ""}${money.format(Math.abs(value))}%`;
+}
+
+function formatQuoteTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 function calculationEndpoint() {
   return window.location.hostname === "ai-stock-cn.github.io" ? GITHUB_PAGES_API : "/api/calculate";
+}
+
+function quoteEndpoint(code: string) {
+  const endpoint = window.location.hostname === "ai-stock-cn.github.io" ? GITHUB_PAGES_QUOTE_API : "/api/quote";
+  return `${endpoint}?code=${encodeURIComponent(code)}`;
 }
 
 function createId(prefix = "trade") {
