@@ -22,7 +22,7 @@ type StoredLedgers = {
   selectedStockId: string;
 };
 
-const STORAGE_KEY = "stock-profit-calculator-v1";
+const STORAGE_KEY = "stock-profit-calculator-v2";
 const GITHUB_PAGES_API = "https://private-stock-ledger.pastelbear20.chatgpt.site/api/calculate";
 
 const INITIAL_STOCKS: StockLedger[] = [
