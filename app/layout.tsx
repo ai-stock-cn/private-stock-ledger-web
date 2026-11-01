@@ -3,24 +3,24 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://private-stock-ledger.pastelbear20.chatgpt.site"),
-  title: "私人持仓与做T计算器",
-  description: "仅供本人使用的股票持仓、交易费用与做T盈亏计算工具。",
+  title: "做T收益计算器",
+  description: "按固定费率计算A股买入、卖出及多笔合并卖出的预计收益。",
   openGraph: {
-    title: "私人持仓台账",
-    description: "底仓、做T、费用与盈亏的一站式私人计算工具。",
+    title: "做T收益计算器",
+    description: "单笔和多笔合并卖出收益快速测算。",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "私人持仓台账",
+        alt: "做T收益计算器",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "私人持仓台账",
-    description: "底仓、做T、费用与盈亏的一站式私人计算工具。",
+    title: "做T收益计算器",
+    description: "单笔和多笔合并卖出收益快速测算。",
     images: ["/og.png"],
   },
   icons: {

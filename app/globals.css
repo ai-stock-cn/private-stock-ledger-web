@@ -1,337 +1,514 @@
-@import "tailwindcss";
-
 :root {
-  --ink: #0a1222;
-  --muted: #667085;
   --paper: #f4f3ed;
-  --panel: #fbfbf7;
-  --line: rgba(10, 18, 34, 0.12);
-  --lime: #d7ff63;
-  --blue: #dce9ff;
-  --red: #c9533f;
-  --green: #267154;
+  --card: #fffef9;
+  --ink: #10151f;
+  --muted: #728096;
+  --line: #d8ddd8;
+  --lime: #d7ff59;
+  --lime-soft: #efffc2;
+  --blue-soft: #e8f0ff;
+  --green: #287a56;
+  --red: #c74c3a;
+  --shadow: 0 22px 70px rgba(36, 43, 34, 0.08);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+}
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-button, input, select { font: inherit; }
-button { color: inherit; }
-
-.portfolio-shell {
-  min-height: 100vh;
-  padding-bottom: 72px;
+  min-width: 320px;
   background:
-    radial-gradient(circle at 93% 5%, rgba(215, 255, 99, 0.46), transparent 25%),
-    radial-gradient(circle at 2% 46%, rgba(121, 168, 255, 0.18), transparent 24%),
-    var(--paper);
+    radial-gradient(circle at 92% 3%, rgba(215, 255, 89, 0.36), transparent 28rem),
+    linear-gradient(180deg, #f8f7f1 0%, var(--paper) 100%);
+  color: var(--ink);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-.portfolio-topbar, .portfolio-intro, .portfolio-toolbar, .portfolio-layout {
-  width: min(1380px, calc(100% - 48px));
-  margin-inline: auto;
+button,
+input {
+  font: inherit;
 }
 
-.portfolio-topbar {
+button {
+  cursor: pointer;
+}
+
+.calculator-shell {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 54px 0 34px;
+}
+
+.calculator-hero,
+.trade-section,
+.combined-section {
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(255, 254, 249, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.calculator-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 40px;
+  align-items: end;
+  padding: 46px 48px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2 {
+  font-family: Georgia, "Songti SC", serif;
+  font-weight: 500;
+}
+
+h1 {
+  margin-bottom: 15px;
+  font-size: clamp(40px, 6vw, 70px);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 32px;
+}
+
+.calculator-hero p,
+.combined-heading p {
+  max-width: 680px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.rate-note {
+  min-width: 286px;
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.rate-note strong,
+.rate-note span {
+  display: block;
+}
+
+.rate-note strong {
+  margin-bottom: 14px;
+  color: var(--lime);
+  font-size: 16px;
+}
+
+.rate-note span {
+  margin-top: 6px;
+  color: #cbd3de;
+  font-size: 11px;
+}
+
+.trade-section,
+.combined-section {
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.section-heading,
+.combined-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 26px 0;
+  gap: 28px;
+  padding: 30px 34px;
   border-bottom: 1px solid var(--line);
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand-mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--ink);
-  color: var(--lime);
-  font-weight: 900;
-}
-.brand strong, .brand small { display: block; }
-.brand strong { font-size: 15px; letter-spacing: .08em; }
-.brand small { margin-top: 3px; color: var(--muted); font: 8px ui-monospace, monospace; letter-spacing: .18em; }
-
-.save-status {
+.heading-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(255,255,255,.55);
-  color: var(--muted);
-  font-size: 10px;
-}
-.save-status i { width: 7px; height: 7px; border-radius: 50%; background: #56a577; box-shadow: 0 0 0 4px rgba(86,165,119,.12); }
-.topbar-actions { display: flex; align-items: center; gap: 9px; }
-.topbar-actions form { margin: 0; }
-.logout-button {
-  min-height: 35px;
-  padding: 0 13px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(255,255,255,.62);
-  color: var(--muted);
-  font-size: 9px;
-  cursor: pointer;
-}
-.logout-button:hover { border-color: rgba(10,18,34,.25); color: var(--ink); }
-
-.portfolio-intro {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) 380px;
-  align-items: end;
-  gap: 64px;
-  padding: 72px 0 52px;
+  gap: 10px;
 }
 
-.eyebrow { color: #728096; font: 700 10px ui-monospace, monospace; letter-spacing: .12em; }
-.portfolio-intro h1 {
-  max-width: 800px;
-  margin: 15px 0 20px;
-  font-family: Georgia, "Songti SC", "SimSun", serif;
-  font-size: clamp(52px, 6.3vw, 88px);
-  font-weight: 500;
-  letter-spacing: -.055em;
-  line-height: 1.03;
+.primary-button,
+.secondary-button {
+  height: 43px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
 }
-.portfolio-intro > div:first-child > p { max-width: 650px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.9; }
 
-.fee-hero {
-  padding: 25px;
-  border-radius: 24px;
+.primary-button {
+  border: 1px solid var(--ink);
   background: var(--ink);
-  color: white;
-  box-shadow: 0 24px 60px rgba(10,18,34,.14);
+  color: #fff;
 }
-.fee-hero > span { color: #98a5b8; font-size: 10px; }
-.fee-hero > strong { display: block; margin: 8px 0 22px; color: var(--lime); font: 800 32px ui-monospace, monospace; }
-.fee-hero > div { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.12); font-size: 11px; }
-.fee-hero > div span { color: #98a5b8; }
-.fee-hero b { font-family: ui-monospace, monospace; }
 
-.portfolio-toolbar {
+.secondary-button {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.trade-list {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.trade-card {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.trade-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 20px 24px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: rgba(251,251,247,.84);
-  backdrop-filter: blur(12px);
+  margin-bottom: 18px;
 }
-.portfolio-toolbar h2 { margin: 5px 0 0; font: 500 28px Georgia, "Songti SC", serif; }
-.add-stock { display: flex; gap: 10px; }
-.add-stock select, .add-stock button { min-height: 44px; border: 1px solid var(--line); border-radius: 12px; }
-.add-stock select { min-width: 290px; padding: 0 14px; background: white; color: var(--ink); }
-.add-stock button, .lot-heading button { padding: 0 18px; border: 0; background: var(--ink); color: white; font-size: 11px; font-weight: 800; cursor: pointer; }
-.add-stock button:disabled { opacity: .45; cursor: not-allowed; }
 
-.portfolio-layout {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) 300px;
-  align-items: start;
-  gap: 22px;
-  padding-top: 22px;
+.trade-title span {
+  color: var(--muted);
+  font: 700 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.12em;
 }
-.holdings-list { display: grid; gap: 20px; min-width: 0; }
-.holding-card { overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: rgba(251,251,247,.96); box-shadow: 0 18px 44px rgba(10,18,34,.06); }
 
-.holding-head {
+.trade-title button {
+  border: 0;
+  background: transparent;
+  color: #9a5b50;
+  font-size: 11px;
+}
+
+.input-grid {
   display: grid;
-  grid-template-columns: minmax(0,1fr) 160px auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+label > span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.input-wrap {
+  display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 24px 28px;
+  min-width: 0;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fbfcfa;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.input-wrap:focus-within {
+  border-color: #7f9f36;
+  box-shadow: 0 0 0 4px rgba(215, 255, 89, 0.28);
+}
+
+.input-wrap i {
+  flex: none;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 12px;
+}
+
+.input-wrap input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 800 16px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.input-wrap input::placeholder {
+  color: #b5bdc8;
+  font-weight: 500;
+}
+
+.sell-input {
+  border-color: #b7ca80;
+  background: #fbffe9;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-top: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.result-item {
+  min-width: 0;
+  padding: 15px 16px;
+  border-right: 1px solid var(--line);
+}
+
+.result-item:last-child {
+  border-right: 0;
+}
+
+.result-item span,
+.result-item strong {
+  display: block;
+}
+
+.result-item span {
+  min-height: 27px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.result-item strong {
+  overflow: hidden;
+  color: var(--ink);
+  font: 800 14px ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-item strong.positive,
+.combined-primary strong.positive {
+  color: var(--red);
+}
+
+.result-item strong.negative,
+.combined-primary strong.negative {
+  color: var(--green);
+}
+
+.result-item strong.accent {
+  color: #5b7c12;
+}
+
+.combined-heading {
+  align-items: flex-end;
+  background: linear-gradient(110deg, rgba(232, 240, 255, 0.65), rgba(239, 255, 194, 0.65));
+}
+
+.combined-price {
+  width: min(320px, 100%);
+  flex: none;
+}
+
+.combined-price .input-wrap {
+  background: #fff;
+}
+
+.combined-results {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 2fr);
+}
+
+.combined-primary {
+  display: flex;
+  min-height: 210px;
+  padding: 34px;
+  flex-direction: column;
+  justify-content: center;
   background: var(--ink);
-  color: white;
+  color: #fff;
 }
-.stock-name { display: flex; align-items: center; gap: 15px; }
-.stock-name > span { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 13px; background: var(--lime); color: var(--ink); font: 800 11px ui-monospace, monospace; }
-.stock-name small { color: #9aa7bb; font-size: 9px; }
-.stock-name h2 { margin: 4px 0 0; font: 500 27px Georgia, "Songti SC", serif; }
-.reference-price { display: grid; gap: 5px; color: #9aa7bb; font-size: 9px; }
-.currency-input { position: relative; }
-.currency-input i { position: absolute; top: 50%; left: 10px; color: var(--lime); font-style: normal; transform: translateY(-50%); }
-.reference-price input { width: 100%; height: 38px; padding: 0 8px 0 25px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; outline: none; background: rgba(255,255,255,.07); color: white; font: 800 14px ui-monospace, monospace; }
-.remove-holding { padding: 8px 11px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; background: transparent; color: #aeb8c7; font-size: 9px; cursor: pointer; }
 
-.base-panel {
+.combined-primary > span {
+  margin-bottom: 12px;
+  color: #aeb8c7;
+  font-size: 11px;
+}
+
+.combined-primary strong {
+  color: var(--lime);
+  font: 800 clamp(30px, 4vw, 48px) ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: -0.05em;
+}
+
+.combined-primary small {
+  margin-top: 14px;
+  color: #aeb8c7;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.combined-details {
   display: grid;
-  grid-template-columns: minmax(220px,1fr) 160px 190px 180px;
-  align-items: end;
-  gap: 16px;
-  margin: 24px;
-  padding: 20px;
-  border: 1px solid rgba(10,18,34,.1);
-  border-radius: 18px;
-  background: #eef4ff;
-}
-.base-copy h3, .lot-heading h3 { margin: 4px 0 5px; font: 500 22px Georgia, "Songti SC", serif; }
-.base-copy p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
-.base-panel label, .fee-settings label { display: grid; gap: 7px; color: var(--muted); font-size: 9px; }
-.base-panel input, .lot-table input, .bulk-sale-panel input, .fee-settings input { width: 100%; border: 1px solid rgba(10,18,34,.13); border-radius: 10px; outline: none; background: white; color: var(--ink); font-family: ui-monospace, monospace; }
-.base-panel input { height: 42px; padding: 0 11px; font-size: 12px; }
-.base-panel input:focus, .lot-table input:focus, .bulk-sale-panel input:focus, .fee-settings input:focus { border-color: #5b78b6; box-shadow: 0 0 0 3px rgba(121,168,255,.18); }
-.base-total { padding: 11px 13px; border-radius: 11px; background: white; }
-.base-total span, .base-total strong { display: block; }
-.base-total span { color: var(--muted); font-size: 9px; }
-.base-total strong { margin-top: 5px; font: 800 13px ui-monospace, monospace; }
-
-.bulk-sale-panel {
-  display: grid;
-  grid-template-columns: minmax(260px,1.15fr) minmax(300px,1fr) minmax(220px,.8fr);
-  gap: 16px;
-  margin: 0 24px 24px;
-  padding: 18px;
-  border: 1px solid rgba(48,113,84,.22);
-  border-radius: 20px;
-  background: linear-gradient(110deg, rgba(215,255,99,.3), rgba(220,233,255,.45));
-}
-.bulk-sale-highlight, .bulk-sale-result { padding: 4px 6px; }
-.bulk-sale-highlight span, .bulk-sale-highlight strong, .bulk-sale-highlight small, .bulk-sale-result span, .bulk-sale-result strong, .bulk-sale-result small { display: block; }
-.bulk-sale-highlight span, .bulk-sale-result span { color: var(--muted); font-size: 9px; }
-.bulk-sale-highlight strong { margin: 6px 0 5px; color: var(--green); font: 900 clamp(27px,3vw,40px) ui-monospace, monospace; }
-.bulk-sale-highlight small, .bulk-sale-result small { color: var(--muted); font-size: 8px; line-height: 1.6; }
-.bulk-sale-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.bulk-sale-form label { display: grid; gap: 6px; color: var(--muted); font-size: 8px; }
-.bulk-sale-form input { height: 38px; padding: 0 10px; text-align: right; }
-.fill-all-button { grid-column: 1 / -1; min-height: 34px; border: 1px solid rgba(10,18,34,.12); border-radius: 10px; background: rgba(255,255,255,.7); font-size: 9px; font-weight: 700; cursor: pointer; }
-.bulk-sale-result strong { margin: 6px 0 5px; font: 800 21px ui-monospace, monospace; }
-.bulk-sale-result > button { width: 100%; min-height: 36px; margin-top: 10px; border: 0; border-radius: 10px; background: var(--ink); color: white; font-size: 10px; font-weight: 800; cursor: pointer; }
-.bulk-sale-result > button:disabled { opacity: .35; cursor: not-allowed; }
-.positive-text { color: var(--green); }
-.negative-text { color: var(--red); }
-
-.lot-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 5px 28px 16px; }
-.lot-heading button { min-height: 38px; border-radius: 10px; }
-.empty-lots { margin: 0 24px 24px; padding: 24px; border: 1px dashed rgba(10,18,34,.18); border-radius: 16px; color: var(--muted); font-size: 11px; text-align: center; }
-.lot-table-wrap { overflow-x: auto; padding: 0 24px 24px; }
-.lot-table { width: 100%; min-width: 1240px; border-collapse: collapse; table-layout: fixed; }
-.lot-table th, .lot-table td { padding: 12px 9px; border-bottom: 1px solid var(--line); text-align: right; vertical-align: middle; }
-.lot-table th { color: #7c8799; font-size: 8px; font-weight: 600; }
-.lot-table td { font: 11px ui-monospace, monospace; }
-.lot-table th:first-child, .lot-table td:first-child { width: 132px; text-align: left; }
-.lot-table th:nth-child(2), .lot-table td:nth-child(2), .lot-table th:nth-child(3), .lot-table td:nth-child(3) { width: 92px; }
-.lot-table th:nth-child(4), .lot-table td:nth-child(4) { width: 116px; }
-.lot-table th:nth-child(5), .lot-table td:nth-child(5) { width: 132px; background: rgba(215,255,99,.16); }
-.lot-table th:nth-child(6), .lot-table td:nth-child(6), .lot-table th:nth-child(7), .lot-table td:nth-child(7) { width: 112px; }
-.lot-table th:nth-child(8), .lot-table td:nth-child(8), .lot-table th:nth-child(9), .lot-table td:nth-child(9) { width: 118px; }
-.lot-table th:last-child, .lot-table td:last-child { width: 126px; }
-.lot-table input { height: 34px; padding: 0 7px; text-align: right; }
-.lot-table input[type="date"] { text-align: left; }
-.lot-table input:disabled { background: #f1f2ee; color: #9aa2af; cursor: not-allowed; }
-.batch-id { display: block; margin-bottom: 5px; color: #61708a; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
-.lot-table td strong, .lot-table td small { display: block; }
-.lot-table td small { margin-top: 4px; color: var(--muted); font-size: 8px; }
-.auto-fee strong { color: #33425b; }
-.profit-price strong { color: var(--green); font-size: 14px; }
-.delete-lot { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f0f1ed; color: var(--muted); cursor: pointer; }
-.lot-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-.confirm-sale { min-height: 30px; padding: 0 9px; border: 0; border-radius: 8px; background: var(--ink); color: white; font-size: 8px; font-weight: 800; cursor: pointer; white-space: nowrap; }
-.confirm-sale:disabled { opacity: .3; cursor: not-allowed; }
-
-.sold-trades { margin: 0 24px 24px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #f8f9f5; }
-.sold-trades-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
-.sold-trades-head h3 { margin: 4px 0 0; font: 500 21px Georgia, "Songti SC", serif; }
-.sold-trades-head p { max-width: 460px; margin: 0; color: var(--muted); font-size: 8px; line-height: 1.6; text-align: right; }
-.sold-table-wrap { overflow-x: auto; }
-.sold-table { width: 100%; min-width: 900px; border-collapse: collapse; }
-.sold-table th, .sold-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; font: 10px ui-monospace, monospace; }
-.sold-table th { color: #7c8799; font-size: 8px; font-weight: 600; }
-.sold-table th:first-child, .sold-table td:first-child, .sold-table th:nth-child(2), .sold-table td:nth-child(2) { text-align: left; }
-.sold-table tr:last-child td { border-bottom: 0; }
-.sold-table small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; }
-
-.position-summary { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); border-top: 1px solid var(--line); }
-.position-summary > div { min-height: 116px; padding: 20px; border-right: 1px solid var(--line); }
-.position-summary > div:last-child { border-right: 0; }
-.position-summary span, .position-summary strong, .position-summary small { display: block; }
-.position-summary span { color: var(--muted); font-size: 9px; }
-.position-summary strong { margin: 12px 0 5px; font: 800 clamp(16px,2vw,23px) ui-monospace, monospace; }
-.position-summary small { color: var(--muted); font-size: 8px; line-height: 1.5; }
-.position-summary .summary-focus { background: rgba(215,255,99,.4); }
-.summary-focus strong, .positive strong { color: var(--green); }
-.negative strong { color: var(--red); }
-
-.fee-settings { position: sticky; top: 18px; padding: 24px; border: 1px solid var(--line); border-radius: 24px; background: rgba(251,251,247,.96); }
-.fee-settings h2 { margin: 5px 0 9px; font: 500 27px Georgia, "Songti SC", serif; }
-.fee-settings > p { margin: 0 0 20px; color: var(--muted); font-size: 10px; line-height: 1.7; }
-.fee-settings label { margin-top: 13px; }
-.percent-input, .currency-setting { position: relative; }
-.percent-input input { height: 40px; padding: 0 34px 0 11px; }
-.percent-input i { position: absolute; top: 50%; right: 12px; color: var(--muted); font-style: normal; transform: translateY(-50%); }
-.currency-setting input { height: 40px; padding: 0 11px 0 30px; }
-.currency-setting i { position: absolute; top: 50%; left: 12px; color: var(--muted); font-style: normal; transform: translateY(-50%); }
-.fee-rules, .formula, .privacy-note { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
-.fee-rules div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 9px; }
-.fee-rules span { color: var(--muted); }
-.formula strong, .privacy-note strong { display: block; margin-bottom: 8px; font-size: 10px; }
-.formula p, .privacy-note p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.65; }
-.privacy-note { padding: 15px; border: 0; border-radius: 13px; background: rgba(215,255,99,.28); }
-.fee-settings > small { display: block; margin-top: 18px; color: #8a93a2; font-size: 8px; line-height: 1.65; }
-
-@media (max-width: 1120px) {
-  .portfolio-intro { grid-template-columns: 1fr 330px; }
-  .portfolio-layout { grid-template-columns: 1fr; }
-  .fee-settings { position: static; }
-  .base-panel { grid-template-columns: minmax(220px,1fr) 150px 180px 170px; }
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: center;
+  padding: 24px;
 }
 
-@media (max-width: 760px) {
-  .portfolio-topbar, .portfolio-intro, .portfolio-toolbar, .portfolio-layout { width: min(100% - 28px,1380px); }
-  .portfolio-topbar { padding: 18px 0; }
-  .portfolio-intro { grid-template-columns: 1fr; gap: 28px; padding: 44px 0 32px; }
-  .portfolio-intro h1 { font-size: clamp(48px,15vw,70px); }
-  .portfolio-toolbar { display: block; }
-  .add-stock { display: grid; grid-template-columns: 1fr auto; margin-top: 18px; }
-  .add-stock select { width: 100%; min-width: 0; }
-  .holding-head { grid-template-columns: minmax(0,1fr) 140px; padding: 20px; }
-  .remove-holding { grid-column: 2; }
-  .base-panel { grid-template-columns: 1fr 1fr; margin: 14px; }
-  .base-copy, .base-total { grid-column: 1 / -1; }
-  .lot-heading { padding-inline: 18px; }
-  .lot-table-wrap { padding-inline: 14px; }
-  .bulk-sale-panel { grid-template-columns: 1fr 1fr; margin-inline: 14px; }
-  .bulk-sale-result { grid-column: 1 / -1; }
-  .sold-trades { margin-inline: 14px; }
-  .sold-trades-head { display: block; }
-  .sold-trades-head p { max-width: none; margin-top: 8px; text-align: left; }
-  .position-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .position-summary > div { border-bottom: 1px solid var(--line); }
-  .position-summary > div:nth-child(even) { border-right: 0; }
-  .position-summary > div:last-child { grid-column: 1 / -1; border-bottom: 0; }
+.combined-details .result-item {
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
 }
 
-@media (max-width: 470px) {
-  .brand small { display: none; }
-  .save-status { padding-inline: 10px; font-size: 8px; }
-  .save-status { display: none; }
-  .add-stock { grid-template-columns: 1fr; }
-  .add-stock button { min-height: 42px; }
-  .holding-head { grid-template-columns: 1fr; }
-  .reference-price { width: 150px; }
-  .remove-holding { grid-column: auto; justify-self: start; }
-  .base-panel { grid-template-columns: 1fr; }
-  .base-copy, .base-total { grid-column: auto; }
-  .lot-heading { align-items: end; }
-  .bulk-sale-panel { grid-template-columns: 1fr; }
-  .bulk-sale-result { grid-column: auto; }
-  .bulk-sale-form { grid-template-columns: 1fr; }
-  .fill-all-button { grid-column: auto; }
-  .position-summary { grid-template-columns: 1fr; }
-  .position-summary > div, .position-summary > div:last-child { grid-column: auto; border-right: 0; border-bottom: 1px solid var(--line); }
-  .position-summary > div:last-child { border-bottom: 0; }
+.combined-details .result-item:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+footer {
+  padding: 24px 8px 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .calculator-hero,
+  .combined-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-hero {
+    display: grid;
+  }
+
+  .rate-note {
+    min-width: 0;
+  }
+
+  .result-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .result-item:nth-child(3) {
+    border-right: 0;
+  }
+
+  .result-item:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .combined-results {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .calculator-shell {
+    width: min(100% - 20px, 1180px);
+    padding: 18px 0 24px;
+  }
+
+  .calculator-hero,
+  .trade-section,
+  .combined-section {
+    border-radius: 20px;
+  }
+
+  .calculator-hero {
+    gap: 24px;
+    padding: 28px 22px;
+  }
+
+  h1 {
+    font-size: 44px;
+  }
+
+  h2 {
+    font-size: 27px;
+  }
+
+  .section-heading,
+  .combined-heading {
+    align-items: stretch;
+    padding: 24px 20px;
+    flex-direction: column;
+  }
+
+  .heading-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trade-list {
+    padding: 10px;
+  }
+
+  .trade-card {
+    padding: 18px;
+  }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .result-item,
+  .result-item:nth-child(3) {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .result-item:nth-child(even) {
+    border-right: 0;
+  }
+
+  .result-item:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .combined-price {
+    width: 100%;
+  }
+
+  .combined-primary {
+    min-height: 180px;
+    padding: 28px 24px;
+  }
+
+  .combined-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px;
+  }
+
+  .combined-details .result-item:nth-last-child(2) {
+    border-bottom: 1px solid var(--line);
+  }
 }
