@@ -26,6 +26,18 @@ export type SellTransaction = {
   netProceeds: number;
 };
 
+export type RemainingLotCost = {
+  boughtShares: number;
+  soldShares: number;
+  remainingShares: number;
+  buyFeePerShare: number;
+  soldBuyFee: number;
+  remainingBuyFee: number;
+  remainingGrossAmount: number;
+  remainingCost: number;
+  remainingUnitCost: number;
+};
+
 export type MinimumProfitableSale = {
   breakEvenPrice: number;
   minimumProfitPrice: number;
@@ -38,6 +50,7 @@ export type MinimumProfitableSale = {
 export const DEFAULT_A_SHARE_FEE_RATES: Readonly<AShareFeeRates>;
 export function roundMoney(value: number): number;
 export function calculateBuyTransaction(shares: number, price: number, rates?: AShareFeeRates): BuyTransaction;
+export function calculateRemainingLotCost(shares: number, price: number, totalBuyFee: number, soldShares?: number): RemainingLotCost;
 export function calculateSellTransaction(shares: number, price: number, rates?: AShareFeeRates): SellTransaction;
 export function findMinimumProfitableSale(shares: number, totalCost: number, rates?: AShareFeeRates): MinimumProfitableSale | null;
 export function findMinimumProfitableSaleWithFixedFee(shares: number, totalCost: number, fixedSellFee: number, priceTick?: number): MinimumProfitableSale | null;

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   calculateBuyTransaction,
   calculateProfitAtPrice,
+  calculateRemainingLotCost,
   calculateSellTransaction,
   findMinimumProfitableSale,
   findMinimumProfitableSaleWithFixedFee,
@@ -35,15 +36,22 @@ test("最低盈利卖价严格覆盖全部买卖费用", () => {
   assert.ok(previous.netProceeds <= buy.totalCost);
 });
 
-test("按台账实际费用计算两笔T仓最低盈利卖价", () => {
+test("按台账实际费用计算剩余T仓最低盈利卖价", () => {
   const first = findMinimumProfitableSaleWithFixedFee(200, 10479.15, 6.42);
-  const second = findMinimumProfitableSaleWithFixedFee(100, 5243.15, 3.7);
-  const combined = findMinimumProfitableSaleWithFixedFee(300, 15722.3, 10.12);
+  const second = findMinimumProfitableSale(100, 5242.58);
 
   assert.equal(first?.minimumProfitPrice, 52.43);
-  assert.equal(second?.minimumProfitPrice, 52.47);
-  assert.equal(combined?.minimumProfitPrice, 52.45);
-  assert.equal(combined?.profit, 2.58);
+  assert.equal(second?.minimumProfitPrice, 52.46);
+});
+
+test("买入200股卖出100股后按比例分摊买入费用", () => {
+  const remaining = calculateRemainingLotCost(200, 52.42, 1.15, 100);
+
+  assert.equal(remaining.remainingShares, 100);
+  assert.equal(remaining.soldBuyFee, 0.575);
+  assert.equal(remaining.remainingBuyFee, 0.575);
+  assert.equal(remaining.remainingCost, 5242.58);
+  assert.equal(remaining.remainingUnitCost, 52.4258);
 });
 
 test("中国平安1800股按整仓成本和收盘价计算盈亏", () => {

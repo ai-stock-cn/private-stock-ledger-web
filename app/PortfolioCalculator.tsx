@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   calculateBuyTransaction,
   calculateProfitAtPrice,
+  calculateRemainingLotCost,
   findMinimumProfitableSale,
   findMinimumProfitableSaleWithFixedFee,
   roundMoney,
@@ -23,8 +24,10 @@ type BuyLot = {
   batchId?: string;
   date: string;
   shares: number | null;
+  soldShares?: number | null;
   price: number | null;
   actualBuyFee?: number | null;
+  actualSoldFee?: number | null;
   expectedSellFee?: number | null;
 };
 
@@ -43,7 +46,7 @@ type FeeForm = {
 };
 
 type SavedPortfolio = {
-  version: 4;
+  version: 5;
   holdings: Holding[];
   fees: FeeForm;
 };
@@ -93,6 +96,7 @@ const DEFAULT_HOLDINGS: Holding[] = [
         batchId: "T-001-A",
         date: "",
         shares: 200,
+        soldShares: 0,
         price: 52.39,
         actualBuyFee: 1.15,
         expectedSellFee: 6.42,
@@ -101,16 +105,18 @@ const DEFAULT_HOLDINGS: Holding[] = [
         id: "lot-t-001-b",
         batchId: "T-001-B",
         date: "",
-        shares: 100,
+        shares: 200,
+        soldShares: 100,
         price: 52.42,
         actualBuyFee: 1.15,
-        expectedSellFee: 3.7,
+        actualSoldFee: 3.7,
+        expectedSellFee: null,
       },
     ],
   },
 ];
-const STORAGE_KEY = "private-stock-portfolio-v4";
-const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v3", "private-stock-portfolio-v2", "private-stock-portfolio-v1"];
+const STORAGE_KEY = "private-stock-portfolio-v5";
+const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v4", "private-stock-portfolio-v3", "private-stock-portfolio-v2", "private-stock-portfolio-v1"];
 const money = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const precisePrice = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
@@ -127,7 +133,7 @@ export default function PortfolioCalculator() {
       const value = window.localStorage.getItem(STORAGE_KEY);
       if (value) {
         const saved = JSON.parse(value) as SavedPortfolio;
-        if (saved.version === 4 && Array.isArray(saved.holdings)) {
+        if (saved.version === 5 && Array.isArray(saved.holdings)) {
           setHoldings(saved.holdings);
           setFees(saved.fees ?? DEFAULT_FEES);
         }
@@ -136,8 +142,8 @@ export default function PortfolioCalculator() {
           .map((key) => window.localStorage.getItem(key))
           .find((item): item is string => Boolean(item));
         if (previousValue) {
-          const previous = JSON.parse(previousValue) as Omit<SavedPortfolio, "version"> & { version: 1 | 2 | 3 };
-          if ([1, 2, 3].includes(previous.version) && Array.isArray(previous.holdings)) {
+          const previous = JSON.parse(previousValue) as Omit<SavedPortfolio, "version"> & { version: 1 | 2 | 3 | 4 };
+          if ([1, 2, 3, 4].includes(previous.version) && Array.isArray(previous.holdings)) {
             setHoldings(mergeLedgerData(previous.holdings));
             setFees(previous.fees ?? DEFAULT_FEES);
           }
@@ -152,7 +158,7 @@ export default function PortfolioCalculator() {
 
   useEffect(() => {
     if (!isReady) return;
-    const saved: SavedPortfolio = { version: 4, holdings, fees };
+    const saved: SavedPortfolio = { version: 5, holdings, fees };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     setSavedAt(new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }));
   }, [fees, holdings, isReady]);
@@ -193,8 +199,10 @@ export default function PortfolioCalculator() {
         batchId: "",
         date: localDate(),
         shares: null,
+        soldShares: 0,
         price: null,
         actualBuyFee: null,
+        actualSoldFee: null,
         expectedSellFee: null,
       }],
     } : holding));
@@ -258,8 +266,8 @@ export default function PortfolioCalculator() {
             const baseShares = holding.baseShares ?? 0;
             const lotTransactions = holding.lots
               .filter((lot) => (lot.shares ?? 0) > 0 && (lot.price ?? 0) > 0)
-              .map((lot) => ({ lot, buy: calculateLotBuy(lot, rates) }));
-            const newShares = lotTransactions.reduce((sum, item) => sum + item.buy.shares, 0);
+              .map((lot) => ({ lot, position: calculateLotPosition(lot, rates) }));
+            const newShares = lotTransactions.reduce((sum, item) => sum + item.position.remainingShares, 0);
             const totalShares = baseShares + newShares;
             const calculatedTotalCost = roundMoney(totalShares * (holding.baseUnitCost ?? 0));
             const totalCost = (holding.totalCostOverride ?? 0) > 0
@@ -293,29 +301,31 @@ export default function PortfolioCalculator() {
 
                 <div className="lot-heading"><div><span className="eyebrow">新买记录</span><h3>做T批次</h3></div><button type="button" onClick={() => addLot(holding.id)}>＋ 新增买入</button></div>
                 {holding.lots.length === 0 ? <div className="empty-lots">还没有新买记录。新增后自动计算最低盈利卖价。</div> : (
-                  <div className="lot-table-wrap"><table className="lot-table"><thead><tr><th>批次 / 日期</th><th>股数</th><th>买入价</th><th>实际买入费</th><th>含费成本</th><th>预计卖出费</th><th>最低盈利卖价</th><th>最低卖出金额</th><th /></tr></thead><tbody>
+                  <div className="lot-table-wrap"><table className="lot-table"><thead><tr><th>批次 / 日期</th><th>买入</th><th>已卖</th><th>剩余</th><th>买入价</th><th>买入总费</th><th>已卖费用</th><th>剩余含费成本</th><th>剩余预计卖出费</th><th>剩余最低盈利价</th><th /></tr></thead><tbody>
                     {holding.lots.map((lot) => {
                       const valid = (lot.shares ?? 0) > 0 && (lot.price ?? 0) > 0;
-                      const buy = calculateLotBuy(lot, rates);
-                      const minimumSale = valid
+                      const position = calculateLotPosition(lot, rates);
+                      const minimumSale = valid && position.remainingShares > 0
                         ? lot.expectedSellFee != null
                           ? findMinimumProfitableSaleWithFixedFee(
-                              buy.shares,
-                              buy.totalCost,
+                              position.remainingShares,
+                              position.remainingCost,
                               lot.expectedSellFee,
                               rates.priceTick,
                             )
-                          : findMinimumProfitableSale(buy.shares, buy.totalCost, rates)
+                          : findMinimumProfitableSale(position.remainingShares, position.remainingCost, rates)
                         : null;
                       return <tr key={lot.id}>
                         <td><span className="batch-id">{lot.batchId || "未编号"}</span><input aria-label="买入日期" type="date" value={lot.date} onChange={(event) => updateLot(holding.id, lot.id, { date: event.target.value })} /></td>
                         <td><input aria-label="买入股数" type="number" min="0" step="100" value={lot.shares ?? ""} onChange={(event) => updateLot(holding.id, lot.id, { shares: optionalNumber(event.target.value) })} placeholder="300" /></td>
+                        <td><input aria-label="已卖股数" type="number" min="0" max={lot.shares ?? undefined} step="100" value={lot.soldShares ?? 0} onChange={(event) => updateLot(holding.id, lot.id, { soldShares: optionalNumber(event.target.value) })} placeholder="0" /></td>
+                        <td><strong>{integer.format(position.remainingShares)}</strong><small>持仓股数</small></td>
                         <td><input aria-label="买入价格" type="number" min="0" step="0.01" value={lot.price ?? ""} onChange={(event) => updateLot(holding.id, lot.id, { price: optionalNumber(event.target.value) })} placeholder="52.39" /></td>
                         <td><input aria-label="实际买入费用" type="number" min="0" step="0.01" value={lot.actualBuyFee ?? ""} onChange={(event) => updateLot(holding.id, lot.id, { actualBuyFee: optionalNumber(event.target.value) })} placeholder={valid ? money.format(calculateBuyTransaction(lot.shares ?? 0, lot.price ?? 0, rates).totalFees) : "自动"} /></td>
-                        <td>{valid ? <><strong>¥{money.format(buy.totalCost)}</strong><small>¥{precisePrice.format(buy.unitCost)} / 股</small></> : "—"}</td>
+                        <td><input aria-label="已卖费用" type="number" min="0" step="0.01" value={lot.actualSoldFee ?? ""} onChange={(event) => updateLot(holding.id, lot.id, { actualSoldFee: optionalNumber(event.target.value) })} placeholder="未卖" /></td>
+                        <td>{valid ? <><strong>¥{money.format(position.remainingCost)}</strong><small>买入费分摊 ¥{money.format(position.remainingBuyFee)}</small></> : "—"}</td>
                         <td><input aria-label="预计卖出费用" type="number" min="0" step="0.01" value={lot.expectedSellFee ?? ""} onChange={(event) => updateLot(holding.id, lot.id, { expectedSellFee: optionalNumber(event.target.value) })} placeholder="按费率" /></td>
                         <td className="profit-price">{minimumSale ? <><strong>¥{money.format(minimumSale.minimumProfitPrice)}</strong><small>需涨 ¥{money.format(minimumSale.minimumProfitPrice - (lot.price ?? 0))}</small></> : "—"}</td>
-                        <td>{minimumSale ? <><strong>¥{money.format(minimumSale.grossAmount)}</strong><small>卖出费 ¥{money.format(minimumSale.totalFees)}</small></> : "—"}</td>
                         <td><button className="delete-lot" type="button" onClick={() => removeLot(holding.id, lot.id)}>×</button></td>
                       </tr>;
                     })}
@@ -367,6 +377,17 @@ function calculateLotBuy(lot: BuyLot, rates: AShareFeeRates) {
   };
 }
 
+function calculateLotPosition(lot: BuyLot, rates: AShareFeeRates) {
+  const buy = calculateLotBuy(lot, rates);
+  const remaining = calculateRemainingLotCost(
+    buy.shares,
+    buy.price,
+    buy.totalFees,
+    lot.soldShares ?? 0,
+  );
+  return { ...buy, ...remaining };
+}
+
 function mergeLedgerData(holdings: Holding[]): Holding[] {
   const importedHolding = DEFAULT_HOLDINGS[0];
   const existing = holdings.find((holding) => holding.symbol === importedHolding.symbol);
@@ -374,21 +395,30 @@ function mergeLedgerData(holdings: Holding[]): Holding[] {
 
   const mergedLots = existing.lots.map((lot) => {
     const importedLot = importedHolding.lots.find(
-      (candidate) => candidate.shares === lot.shares && candidate.price === lot.price,
+      (candidate) => candidate.id === lot.id
+        || candidate.batchId === lot.batchId
+        || (candidate.shares === lot.shares && candidate.price === lot.price),
     );
     return importedLot
       ? {
           ...lot,
+          shares: importedLot.shares,
+          soldShares: lot.soldShares ?? importedLot.soldShares,
           batchId: lot.batchId || importedLot.batchId,
           actualBuyFee: lot.actualBuyFee ?? importedLot.actualBuyFee,
-          expectedSellFee: lot.expectedSellFee ?? importedLot.expectedSellFee,
+          actualSoldFee: lot.actualSoldFee ?? importedLot.actualSoldFee,
+          expectedSellFee: importedLot.actualSoldFee != null
+            ? importedLot.expectedSellFee
+            : lot.expectedSellFee ?? importedLot.expectedSellFee,
         }
       : lot;
   });
 
   for (const importedLot of importedHolding.lots) {
     const alreadyPresent = mergedLots.some(
-      (lot) => lot.shares === importedLot.shares && lot.price === importedLot.price,
+      (lot) => lot.id === importedLot.id
+        || lot.batchId === importedLot.batchId
+        || (lot.shares === importedLot.shares && lot.price === importedLot.price),
     );
     if (!alreadyPresent) mergedLots.push(importedLot);
   }
