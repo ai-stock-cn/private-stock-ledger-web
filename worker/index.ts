@@ -31,6 +31,9 @@ const requestBuckets = new Map<string, RateBucket>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_REQUESTS = 120;
 const MAX_BODY_BYTES = 32_000;
+const PUBLIC_API_ORIGINS = new Set([
+  "https://ai-stock-cn.github.io",
+]);
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -56,28 +59,57 @@ const worker = {
 };
 
 async function calculateResponse(request: Request, env: Env): Promise<Response> {
+  const corsHeaders = apiCorsHeaders(request);
+
+  if (!isAllowedApiOrigin(request)) {
+    return jsonResponse({ error: "origin_not_allowed" }, 403);
+  }
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   if (request.method !== "POST") {
-    return jsonResponse({ error: "method_not_allowed" }, 405, { Allow: "POST" });
+    return jsonResponse({ error: "method_not_allowed" }, 405, { ...corsHeaders, Allow: "POST, OPTIONS" });
   }
 
   if (!allowRequest(request)) {
-    return jsonResponse({ error: "too_many_requests" }, 429, { "Retry-After": "60" });
+    return jsonResponse({ error: "too_many_requests" }, 429, { ...corsHeaders, "Retry-After": "60" });
   }
 
   const contentLength = Number(request.headers.get("Content-Length") ?? 0);
   if (contentLength > MAX_BODY_BYTES) {
-    return jsonResponse({ error: "payload_too_large" }, 413);
+    return jsonResponse({ error: "payload_too_large" }, 413, corsHeaders);
   }
 
   try {
     const rates = parsePrivateRates(env.TRADING_FEE_CONFIG);
     const payload = await request.json();
-    return jsonResponse(calculateTradePlan(payload, rates), 200);
+    return jsonResponse(calculateTradePlan(payload, rates), 200, corsHeaders);
   } catch (error) {
     const message = error instanceof Error ? error.message : "invalid_request";
     const status = message === "fee_config_unavailable" ? 503 : 400;
-    return jsonResponse({ error: status === 503 ? "service_unavailable" : "invalid_request" }, status);
+    return jsonResponse({ error: status === 503 ? "service_unavailable" : "invalid_request" }, status, corsHeaders);
   }
+}
+
+function isAllowedApiOrigin(request: Request): boolean {
+  const origin = request.headers.get("Origin");
+  if (!origin) return true;
+  return origin === new URL(request.url).origin || PUBLIC_API_ORIGINS.has(origin);
+}
+
+function apiCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("Origin");
+  if (!origin || !isAllowedApiOrigin(request)) return {};
+
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
 }
 
 function parsePrivateRates(value: string | undefined): AShareFeeRates {

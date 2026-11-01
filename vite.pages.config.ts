@@ -7,7 +7,7 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: path.join(projectRoot, "github-pages"),
-  base: "/private-stock-ledger/",
+  base: "/private-stock-ledger-web/",
   publicDir: path.join(projectRoot, "public"),
   plugins: [react()],
   resolve: {

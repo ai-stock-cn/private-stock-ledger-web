@@ -4,26 +4,37 @@ import { useEffect, useMemo, useState } from "react";
 
 type TradeInput = {
   id: string;
-  stockName?: string;
   shares: string;
   buyPrice: string;
   sellPrice: string;
 };
 
-const INITIAL_TRADES: TradeInput[] = [
+type StockLedger = {
+  id: string;
+  name: string;
+  code: string;
+  trades: TradeInput[];
+  combinedSellPrice: string;
+};
+
+type StoredLedgers = {
+  stocks: StockLedger[];
+  selectedStockId: string;
+};
+
+const STORAGE_KEY = "stock-profit-calculator-v1";
+const GITHUB_PAGES_API = "https://private-stock-ledger.pastelbear20.chatgpt.site/api/calculate";
+
+const INITIAL_STOCKS: StockLedger[] = [
   {
-    id: "ping-an-1",
-    stockName: "中国平安",
-    shares: "200",
-    buyPrice: "52.39",
-    sellPrice: "",
-  },
-  {
-    id: "ping-an-2",
-    stockName: "中国平安",
-    shares: "100",
-    buyPrice: "52.42",
-    sellPrice: "",
+    id: "ping-an",
+    name: "中国平安",
+    code: "601318",
+    trades: [
+      { id: "ping-an-1", shares: "200", buyPrice: "52.39", sellPrice: "" },
+      { id: "ping-an-2", shares: "100", buyPrice: "52.42", sellPrice: "" },
+    ],
+    combinedSellPrice: "",
   },
 ];
 
@@ -55,25 +66,45 @@ type CalculationResult = {
 };
 
 export default function PortfolioCalculator() {
-  const [trades, setTrades] = useState<TradeInput[]>(() => initialTrades());
-  const [combinedSellPrice, setCombinedSellPrice] = useState("");
+  const [stocks, setStocks] = useState<StockLedger[]>(() => initialStocks());
+  const [selectedStockId, setSelectedStockId] = useState(INITIAL_STOCKS[0].id);
+  const [storageReady, setStorageReady] = useState(false);
   const [calculation, setCalculation] = useState<CalculationResult | null>(null);
   const [calculationError, setCalculationError] = useState(false);
+  const selectedStock = stocks.find((stock) => stock.id === selectedStockId) ?? stocks[0]!;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const stored = loadStoredLedgers();
+      if (stored) {
+        setStocks(stored.stocks);
+        setSelectedStockId(stored.selectedStockId);
+      }
+      setStorageReady(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ stocks, selectedStockId }));
+  }, [selectedStockId, storageReady, stocks]);
 
   const requestPayload = useMemo(() => ({
-    trades: trades.map((trade) => ({
+    trades: selectedStock.trades.map((trade) => ({
       shares: positiveNumber(trade.shares),
       buyPrice: positiveNumber(trade.buyPrice),
       sellPrice: positiveNumber(trade.sellPrice),
     })),
-    combinedSellPrice: positiveNumber(combinedSellPrice),
-  }), [combinedSellPrice, trades]);
+    combinedSellPrice: positiveNumber(selectedStock.combinedSellPrice),
+  }), [selectedStock]);
 
   useEffect(() => {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       try {
-        const response = await fetch("/api/calculate", {
+        const response = await fetch(calculationEndpoint(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestPayload),
@@ -96,47 +127,131 @@ export default function PortfolioCalculator() {
     };
   }, [requestPayload]);
 
-  const calculations = trades.map((trade, index) => ({
+  const calculations = selectedStock.trades.map((trade, index) => ({
     trade,
     result: calculation?.rows[index] ?? null,
   }));
   const combined = calculation?.combined ?? null;
 
-  function updateTrade(id: string, field: "shares" | "buyPrice" | "sellPrice", value: string) {
-    setTrades((current) => current.map((trade) => (
-      trade.id === id ? { ...trade, [field]: value } : trade
+  function updateSelectedStock(updater: (stock: StockLedger) => StockLedger) {
+    setStocks((current) => current.map((stock) => (
+      stock.id === selectedStock.id ? updater(stock) : stock
     )));
   }
 
+  function updateStockIdentity(field: "name" | "code", value: string) {
+    updateSelectedStock((stock) => ({ ...stock, [field]: value }));
+  }
+
+  function updateTrade(id: string, field: "shares" | "buyPrice" | "sellPrice", value: string) {
+    updateSelectedStock((stock) => ({
+      ...stock,
+      trades: stock.trades.map((trade) => (
+        trade.id === id ? { ...trade, [field]: value } : trade
+      )),
+    }));
+  }
+
+  function updateCombinedSellPrice(value: string) {
+    updateSelectedStock((stock) => ({ ...stock, combinedSellPrice: value }));
+  }
+
   function addTrade() {
-    setTrades((current) => [
-      ...current,
-      { id: createId(), shares: "", buyPrice: "", sellPrice: "" },
-    ]);
+    updateSelectedStock((stock) => ({
+      ...stock,
+      trades: [...stock.trades, emptyTrade()],
+    }));
   }
 
   function removeTrade(id: string) {
-    setTrades((current) => {
-      const next = current.filter((trade) => trade.id !== id);
-      return next.length ? next : [{ id: createId(), shares: "", buyPrice: "", sellPrice: "" }];
+    updateSelectedStock((stock) => {
+      const next = stock.trades.filter((trade) => trade.id !== id);
+      return { ...stock, trades: next.length ? next : [emptyTrade()] };
     });
   }
 
   function resetCalculator() {
-    setTrades(initialTrades());
-    setCombinedSellPrice("");
+    updateSelectedStock((stock) => ({
+      ...stock,
+      trades: [emptyTrade()],
+      combinedSellPrice: "",
+    }));
+  }
+
+  function addStock() {
+    const stock = createStock(stocks.length + 1);
+    setStocks((current) => [...current, stock]);
+    setSelectedStockId(stock.id);
+  }
+
+  function removeSelectedStock() {
+    if (stocks.length === 1) return;
+    const next = stocks.filter((stock) => stock.id !== selectedStock.id);
+    setStocks(next);
+    setSelectedStockId(next[0].id);
   }
 
   return (
     <main className="calculator-shell">
+      <section className="stock-panel">
+        <div className="stock-switcher">
+          <div>
+            <span className="eyebrow">股票台账</span>
+            <h1>{selectedStock.name || "未命名股票"}</h1>
+            <p>每只股票独立记录，切换后不会混合计算。</p>
+          </div>
+          <div className="stock-switcher-actions">
+            <label className="stock-select">
+              <span>切换股票</span>
+              <select value={selectedStock.id} onChange={(event) => setSelectedStockId(event.target.value)}>
+                {stocks.map((stock) => (
+                  <option key={stock.id} value={stock.id}>
+                    {stock.name || "未命名股票"}{stock.code ? ` · ${stock.code}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="primary-button" type="button" onClick={addStock}>＋ 新增股票</button>
+            {stocks.length > 1 ? (
+              <button className="danger-button" type="button" onClick={removeSelectedStock}>删除当前</button>
+            ) : null}
+          </div>
+        </div>
+        <div className="stock-identity">
+          <label>
+            <span>股票名称</span>
+            <input
+              type="text"
+              value={selectedStock.name}
+              onChange={(event) => updateStockIdentity("name", event.target.value)}
+              placeholder="例如 云南白药"
+            />
+          </label>
+          <label>
+            <span>股票代码</span>
+            <input
+              inputMode="numeric"
+              type="text"
+              value={selectedStock.code}
+              onChange={(event) => updateStockIdentity("code", event.target.value)}
+              placeholder="例如 000538"
+            />
+          </label>
+          <div className="storage-note">
+            <strong>{stocks.length} 只</strong>
+            <span>数据仅保存在当前浏览器</span>
+          </div>
+        </div>
+      </section>
+
       <section className="trade-section">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">分笔测算</span>
+            <span className="eyebrow">{selectedStock.name || "当前股票"} · 分笔测算</span>
             <h2>买入与卖出</h2>
           </div>
           <div className="heading-actions">
-            <button className="secondary-button" type="button" onClick={resetCalculator}>清空重算</button>
+            <button className="secondary-button" type="button" onClick={resetCalculator}>清空当前</button>
             <button className="primary-button" type="button" onClick={addTrade}>＋ 新增一笔</button>
           </div>
         </div>
@@ -148,8 +263,8 @@ export default function PortfolioCalculator() {
           {calculations.map(({ trade, result }, index) => (
             <article className="trade-card" key={trade.id}>
               <div className="trade-title">
-                <span>{trade.stockName ? `${trade.stockName} · ` : ""}第 {String(index + 1).padStart(2, "0")} 笔</span>
-                {trades.length > 1 ? (
+                <span>{selectedStock.name || "当前股票"} · 第 {String(index + 1).padStart(2, "0")} 笔</span>
+                {selectedStock.trades.length > 1 ? (
                   <button type="button" onClick={() => removeTrade(trade.id)} aria-label={`删除第 ${index + 1} 笔`}>
                     删除
                   </button>
@@ -206,11 +321,7 @@ export default function PortfolioCalculator() {
 
               <div className="result-grid">
                 <ResultItem label="买入金额" value={currencyOrDash(result?.buyAmount)} />
-                <ResultItem
-                  label="不亏卖价"
-                  value={priceOrDash(result?.minimumProfitPrice)}
-                  tone="accent"
-                />
+                <ResultItem label="不亏卖价" value={priceOrDash(result?.minimumProfitPrice)} tone="accent" />
                 <ResultItem
                   label="预计盈利"
                   value={result?.profit === null || result?.profit === undefined ? "—" : signedMoney(result.profit)}
@@ -225,9 +336,9 @@ export default function PortfolioCalculator() {
       <section className="combined-section">
         <div className="combined-heading">
           <div>
-            <span className="eyebrow">合并卖出</span>
+            <span className="eyebrow">{selectedStock.name || "当前股票"} · 合并卖出</span>
             <h2>全部一起卖能赚多少</h2>
-            <p>所有已填写的买入记录按一笔卖单计算，卖出费用只收一次。</p>
+            <p>当前股票的所有买入记录按一笔卖单计算，卖出费用只收一次。</p>
           </div>
           <label className="combined-price">
             <span>全部卖出价格</span>
@@ -238,8 +349,8 @@ export default function PortfolioCalculator() {
                 min="0"
                 step="0.01"
                 type="number"
-                value={combinedSellPrice}
-                onChange={(event) => setCombinedSellPrice(event.target.value)}
+                value={selectedStock.combinedSellPrice}
+                onChange={(event) => updateCombinedSellPrice(event.target.value)}
                 placeholder="输入统一卖价"
               />
             </div>
@@ -261,11 +372,7 @@ export default function PortfolioCalculator() {
           <div className="combined-details">
             <ResultItem label="合计股数" value={combined?.totalShares ? `${integer.format(combined.totalShares)} 股` : "—"} />
             <ResultItem label="总买入金额" value={currencyOrDash(combined?.totalBuyAmount)} />
-            <ResultItem
-              label="一起卖不亏价"
-              value={priceOrDash(combined?.minimumProfitPrice)}
-              tone="accent"
-            />
+            <ResultItem label="一起卖不亏价" value={priceOrDash(combined?.minimumProfitPrice)} tone="accent" />
             <ResultItem
               label={`分笔卖盈利${combined?.completedSeparateTrades ? `（${combined.completedSeparateTrades}笔）` : ""}`}
               value={combined?.completedSeparateTrades ? signedMoney(combined.separateProfit) : "—"}
@@ -322,12 +429,65 @@ function profitTone(value?: number): "positive" | "negative" | undefined {
   return value > 0 ? "positive" : "negative";
 }
 
-function createId() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `trade-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+function calculationEndpoint() {
+  return window.location.hostname === "ai-stock-cn.github.io" ? GITHUB_PAGES_API : "/api/calculate";
 }
 
-function initialTrades() {
-  return INITIAL_TRADES.map((trade) => ({ ...trade }));
+function createId(prefix = "trade") {
+  const id = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${prefix}-${id}`;
+}
+
+function emptyTrade(): TradeInput {
+  return { id: createId(), shares: "", buyPrice: "", sellPrice: "" };
+}
+
+function createStock(position: number): StockLedger {
+  return {
+    id: createId("stock"),
+    name: `股票 ${position}`,
+    code: "",
+    trades: [emptyTrade()],
+    combinedSellPrice: "",
+  };
+}
+
+function initialStocks() {
+  return INITIAL_STOCKS.map((stock) => ({
+    ...stock,
+    trades: stock.trades.map((trade) => ({ ...trade })),
+  }));
+}
+
+function loadStoredLedgers(): StoredLedgers | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as Partial<StoredLedgers>;
+    if (!Array.isArray(stored.stocks) || stored.stocks.length === 0) return null;
+
+    const stocks = stored.stocks.map((stock, stockIndex) => ({
+      id: typeof stock.id === "string" && stock.id ? stock.id : createId("stock"),
+      name: typeof stock.name === "string" ? stock.name : `股票 ${stockIndex + 1}`,
+      code: typeof stock.code === "string" ? stock.code : "",
+      trades: Array.isArray(stock.trades) && stock.trades.length
+        ? stock.trades.map((trade) => ({
+          id: typeof trade.id === "string" && trade.id ? trade.id : createId(),
+          shares: typeof trade.shares === "string" ? trade.shares : "",
+          buyPrice: typeof trade.buyPrice === "string" ? trade.buyPrice : "",
+          sellPrice: typeof trade.sellPrice === "string" ? trade.sellPrice : "",
+        }))
+        : [emptyTrade()],
+      combinedSellPrice: typeof stock.combinedSellPrice === "string" ? stock.combinedSellPrice : "",
+    }));
+    const selectedStockId = stocks.some((stock) => stock.id === stored.selectedStockId)
+      ? stored.selectedStockId as string
+      : stocks[0].id;
+
+    return { stocks, selectedStockId };
+  } catch {
+    return null;
+  }
 }
