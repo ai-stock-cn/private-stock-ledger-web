@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  calculateAdjustedHoldingCosts,
   calculateBuyTransaction,
   calculateProfitAtPrice,
+  calculateRealizedLotSale,
   calculateRemainingLotCost,
   calculateSellTransaction,
   findMinimumProfitableSale,
@@ -52,6 +54,27 @@ test("买入200股卖出100股后按比例分摊买入费用", () => {
   assert.equal(remaining.remainingBuyFee, 0.575);
   assert.equal(remaining.remainingCost, 5242.58);
   assert.equal(remaining.remainingUnitCost, 52.4258);
+});
+
+test("填写卖出价后自动计算已实现盈利", () => {
+  const sale = calculateRealizedLotSale(100, 52.42, 0.575, 52.8);
+
+  assert.ok(sale);
+  assert.equal(sale.soldCost, 5242.58);
+  assert.equal(sale.grossAmount, 5280);
+  assert.equal(sale.totalFees, 3.22);
+  assert.equal(sale.netProceeds, 5276.78);
+  assert.equal(sale.profit, 34.2);
+});
+
+test("已实现盈利自动降低1500股底仓和1800股整仓策略成本", () => {
+  const result = calculateAdjustedHoldingCosts(91777.18, 1500, 1800, 15721.73, 34.2);
+
+  assert.equal(result.baseCostBeforeAdjustment, 76055.45);
+  assert.equal(result.adjustedBaseCost, 76021.25);
+  assert.equal(roundMoney(result.adjustedBaseUnitCost), 50.68);
+  assert.equal(result.adjustedTotalCost, 91742.98);
+  assert.equal(roundMoney(result.adjustedTotalUnitCost), 50.97);
 });
 
 test("中国平安1800股按整仓成本和收盘价计算盈亏", () => {
