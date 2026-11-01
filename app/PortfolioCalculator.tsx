@@ -70,6 +70,7 @@ export default function PortfolioCalculator() {
   const [selectedStockId, setSelectedStockId] = useState(INITIAL_STOCKS[0].id);
   const [storageReady, setStorageReady] = useState(false);
   const [pendingSaleId, setPendingSaleId] = useState<string | null>(null);
+  const [pendingFullSale, setPendingFullSale] = useState(false);
   const [calculation, setCalculation] = useState<CalculationResult | null>(null);
   const [calculationError, setCalculationError] = useState(false);
   const selectedStock = stocks.find((stock) => stock.id === selectedStockId) ?? stocks[0]!;
@@ -174,6 +175,7 @@ export default function PortfolioCalculator() {
 
   function selectStock(id: string) {
     setPendingSaleId(null);
+    setPendingFullSale(false);
     setSelectedStockId(id);
   }
 
@@ -187,7 +189,26 @@ export default function PortfolioCalculator() {
     setPendingSaleId(null);
   }
 
+  function beginFullSale() {
+    const hasShares = selectedStock.trades.some((trade) => positiveNumber(trade.shares) > 0);
+    if (!hasShares || !positiveNumber(selectedStock.combinedSellPrice)) return;
+    setPendingSaleId(null);
+    setPendingFullSale(true);
+  }
+
+  function confirmFullSale() {
+    updateSelectedStock((stock) => ({
+      ...stock,
+      trades: [emptyTrade()],
+      combinedSellPrice: "",
+    }));
+    setPendingSaleId(null);
+    setPendingFullSale(false);
+  }
+
   function resetCalculator() {
+    setPendingSaleId(null);
+    setPendingFullSale(false);
     updateSelectedStock((stock) => ({
       ...stock,
       trades: [emptyTrade()],
@@ -198,6 +219,8 @@ export default function PortfolioCalculator() {
   function addStock() {
     const stock = createStock(stocks.length + 1);
     setStocks((current) => [...current, stock]);
+    setPendingSaleId(null);
+    setPendingFullSale(false);
     setSelectedStockId(stock.id);
   }
 
@@ -205,6 +228,8 @@ export default function PortfolioCalculator() {
     if (stocks.length === 1) return;
     const next = stocks.filter((stock) => stock.id !== selectedStock.id);
     setStocks(next);
+    setPendingSaleId(null);
+    setPendingFullSale(false);
     setSelectedStockId(next[0].id);
   }
 
@@ -383,21 +408,47 @@ export default function PortfolioCalculator() {
             <h2>全部一起卖能赚多少</h2>
             <p>当前股票的所有买入记录按一笔卖单计算，卖出费用只收一次。</p>
           </div>
-          <label className="combined-price">
-            <span>全部卖出价格</span>
-            <div className="input-wrap">
-              <i>¥</i>
-              <input
-                inputMode="decimal"
-                min="0"
-                step="0.01"
-                type="number"
-                value={selectedStock.combinedSellPrice}
-                onChange={(event) => updateCombinedSellPrice(event.target.value)}
-                placeholder="输入统一卖价"
-              />
+          <div className="combined-controls">
+            <label className="combined-price">
+              <span>全部卖出价格</span>
+              <div className="input-wrap">
+                <i>¥</i>
+                <input
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  type="number"
+                  value={selectedStock.combinedSellPrice}
+                  onChange={(event) => updateCombinedSellPrice(event.target.value)}
+                  placeholder="输入统一卖价"
+                />
+              </div>
+            </label>
+            <div className="full-sale-actions">
+              {pendingFullSale ? (
+                <>
+                  <button className="cancel-full-sale" type="button" onClick={() => setPendingFullSale(false)}>
+                    取消
+                  </button>
+                  <button className="finalize-full-sale" type="button" onClick={confirmFullSale}>
+                    确定全部卖出
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="full-sale-button"
+                  type="button"
+                  disabled={
+                    !positiveNumber(selectedStock.combinedSellPrice)
+                    || !selectedStock.trades.some((trade) => positiveNumber(trade.shares) > 0)
+                  }
+                  onClick={beginFullSale}
+                >
+                  全量卖出
+                </button>
+              )}
             </div>
-          </label>
+          </div>
         </div>
 
         <div className="combined-results">

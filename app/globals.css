@@ -463,6 +463,60 @@ label > span {
   background: #fff;
 }
 
+.combined-controls {
+  display: grid;
+  width: min(320px, 100%);
+  flex: none;
+  gap: 10px;
+}
+
+.full-sale-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.full-sale-button,
+.cancel-full-sale,
+.finalize-full-sale {
+  height: 42px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.full-sale-button {
+  grid-column: 1 / -1;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.full-sale-button:disabled {
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: #e8ebe7;
+  color: #a8b0ba;
+}
+
+.cancel-full-sale {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+}
+
+.finalize-full-sale {
+  border: 1px solid #a44332;
+  background: #a44332;
+  color: #fff;
+}
+
+.full-sale-button:not(:disabled):hover,
+.cancel-full-sale:hover,
+.finalize-full-sale:hover {
+  transform: translateY(-1px);
+}
+
 .combined-results {
   display: grid;
   grid-template-columns: minmax(280px, 0.8fr) minmax(0, 2fr);
@@ -627,6 +681,10 @@ footer {
   }
 
   .combined-price {
+    width: 100%;
+  }
+
+  .combined-controls {
     width: 100%;
   }
 
