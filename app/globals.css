@@ -210,7 +210,7 @@ button { color: inherit; }
 .profit-price strong { color: var(--green); font-size: 14px; }
 .delete-lot { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f0f1ed; color: var(--muted); cursor: pointer; }
 
-.position-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid var(--line); }
+.position-summary { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); border-top: 1px solid var(--line); }
 .position-summary > div { min-height: 116px; padding: 20px; border-right: 1px solid var(--line); }
 .position-summary > div:last-child { border-right: 0; }
 .position-summary span, .position-summary strong, .position-summary small { display: block; }
@@ -240,8 +240,7 @@ button { color: inherit; }
   .portfolio-intro { grid-template-columns: 1fr 330px; }
   .portfolio-layout { grid-template-columns: 1fr; }
   .fee-settings { position: static; }
-  .base-panel { grid-template-columns: 1fr 160px 190px; }
-  .base-total { grid-column: 2 / -1; }
+  .base-panel { grid-template-columns: minmax(220px,1fr) 150px 180px 170px; }
 }
 
 @media (max-width: 760px) {
@@ -259,8 +258,9 @@ button { color: inherit; }
   .lot-heading { padding-inline: 18px; }
   .lot-table-wrap { padding-inline: 14px; }
   .position-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .position-summary > div:nth-child(2) { border-right: 0; }
-  .position-summary > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .position-summary > div { border-bottom: 1px solid var(--line); }
+  .position-summary > div:nth-child(even) { border-right: 0; }
+  .position-summary > div:last-child { grid-column: 1 / -1; border-bottom: 0; }
 }
 
 @media (max-width: 470px) {
@@ -276,5 +276,6 @@ button { color: inherit; }
   .base-copy, .base-total { grid-column: auto; }
   .lot-heading { align-items: end; }
   .position-summary { grid-template-columns: 1fr; }
-  .position-summary > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .position-summary > div, .position-summary > div:last-child { grid-column: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .position-summary > div:last-child { border-bottom: 0; }
 }

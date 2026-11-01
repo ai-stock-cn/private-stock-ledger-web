@@ -6,6 +6,7 @@ import {
   calculateSellTransaction,
   findMinimumProfitableSale,
   findMinimumProfitableSaleWithFixedFee,
+  roundMoney,
 } from "../lib/trading-costs.js";
 
 test("万一免五买入按佣金和过户费计算", () => {
@@ -46,12 +47,14 @@ test("按台账实际费用计算两笔T仓最低盈利卖价", () => {
 });
 
 test("中国平安1800股按整仓成本和收盘价计算盈亏", () => {
-  const totalCost = 1800 * 50.987;
+  const totalCost = 91777.18;
+  const marketValue = 1800 * 52.8;
+  const grossProfit = roundMoney(marketValue - totalCost);
   const current = calculateProfitAtPrice(1800, totalCost, 52.8);
   const minimum = findMinimumProfitableSale(1800, totalCost);
 
-  assert.equal(totalCost, 91776.6);
+  assert.equal(grossProfit, 3262.82);
   assert.equal(current.totalFees, 57.97);
-  assert.equal(current.profit, 3205.43);
+  assert.equal(current.profit, 3204.85);
   assert.equal(minimum?.minimumProfitPrice, 51.02);
 });

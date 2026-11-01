@@ -32,6 +32,7 @@ type Holding = StockPreset & {
   id: string;
   baseShares: number | null;
   baseUnitCost: number | null;
+  totalCostOverride?: number | null;
   lots: BuyLot[];
 };
 
@@ -42,7 +43,7 @@ type FeeForm = {
 };
 
 type SavedPortfolio = {
-  version: 3;
+  version: 4;
   holdings: Holding[];
   fees: FeeForm;
 };
@@ -85,6 +86,7 @@ const DEFAULT_HOLDINGS: Holding[] = [
     id: "holding-601318",
     baseShares: 1500,
     baseUnitCost: 50.987,
+    totalCostOverride: 91777.18,
     lots: [
       {
         id: "lot-t-001-a",
@@ -107,8 +109,8 @@ const DEFAULT_HOLDINGS: Holding[] = [
     ],
   },
 ];
-const STORAGE_KEY = "private-stock-portfolio-v3";
-const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v2", "private-stock-portfolio-v1"];
+const STORAGE_KEY = "private-stock-portfolio-v4";
+const PREVIOUS_STORAGE_KEYS = ["private-stock-portfolio-v3", "private-stock-portfolio-v2", "private-stock-portfolio-v1"];
 const money = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const precisePrice = new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
@@ -125,7 +127,7 @@ export default function PortfolioCalculator() {
       const value = window.localStorage.getItem(STORAGE_KEY);
       if (value) {
         const saved = JSON.parse(value) as SavedPortfolio;
-        if (saved.version === 3 && Array.isArray(saved.holdings)) {
+        if (saved.version === 4 && Array.isArray(saved.holdings)) {
           setHoldings(saved.holdings);
           setFees(saved.fees ?? DEFAULT_FEES);
         }
@@ -134,8 +136,8 @@ export default function PortfolioCalculator() {
           .map((key) => window.localStorage.getItem(key))
           .find((item): item is string => Boolean(item));
         if (previousValue) {
-          const previous = JSON.parse(previousValue) as Omit<SavedPortfolio, "version"> & { version: 1 | 2 };
-          if ([1, 2].includes(previous.version) && Array.isArray(previous.holdings)) {
+          const previous = JSON.parse(previousValue) as Omit<SavedPortfolio, "version"> & { version: 1 | 2 | 3 };
+          if ([1, 2, 3].includes(previous.version) && Array.isArray(previous.holdings)) {
             setHoldings(mergeLedgerData(previous.holdings));
             setFees(previous.fees ?? DEFAULT_FEES);
           }
@@ -150,7 +152,7 @@ export default function PortfolioCalculator() {
 
   useEffect(() => {
     if (!isReady) return;
-    const saved: SavedPortfolio = { version: 3, holdings, fees };
+    const saved: SavedPortfolio = { version: 4, holdings, fees };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     setSavedAt(new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }));
   }, [fees, holdings, isReady]);
@@ -178,6 +180,7 @@ export default function PortfolioCalculator() {
       id: createId("holding"),
       baseShares: null,
       baseUnitCost: null,
+      totalCostOverride: null,
       lots: [],
     }]);
   }
@@ -258,11 +261,19 @@ export default function PortfolioCalculator() {
               .map((lot) => ({ lot, buy: calculateLotBuy(lot, rates) }));
             const newShares = lotTransactions.reduce((sum, item) => sum + item.buy.shares, 0);
             const totalShares = baseShares + newShares;
-            const costReady = totalShares === 0 || (holding.baseUnitCost ?? 0) > 0;
-            const totalCost = roundMoney(totalShares * (holding.baseUnitCost ?? 0));
+            const calculatedTotalCost = roundMoney(totalShares * (holding.baseUnitCost ?? 0));
+            const totalCost = (holding.totalCostOverride ?? 0) > 0
+              ? roundMoney(holding.totalCostOverride ?? 0)
+              : calculatedTotalCost;
+            const costReady = totalShares === 0 || totalCost > 0;
             const wholeSale = costReady ? findMinimumProfitableSale(totalShares, totalCost, rates) : null;
             const currentResult = costReady && holding.referencePrice > 0 && totalShares > 0
               ? calculateProfitAtPrice(totalShares, totalCost, holding.referencePrice, rates)
+              : null;
+            const currentMarketValue = roundMoney(totalShares * holding.referencePrice);
+            const grossProfit = currentResult ? roundMoney(currentMarketValue - totalCost) : null;
+            const grossReturn = currentResult && (holding.baseUnitCost ?? 0) > 0
+              ? ((holding.referencePrice / (holding.baseUnitCost ?? 1)) - 1) * 100
               : null;
 
             return (
@@ -274,10 +285,10 @@ export default function PortfolioCalculator() {
                 </div>
 
                 <div className="base-panel">
-                  <div className="base-copy"><span className="eyebrow">长期底仓</span><h3>持仓信息</h3><p>底仓股数单独记录；成本价填写券商显示的当前整仓综合成本，视为已包含历史交易费用。</p></div>
+                  <div className="base-copy"><span className="eyebrow">长期底仓</span><h3>持仓信息</h3><p>底仓股数与券商成本分开记录；精确总成本用于校准券商浮盈和预计卖出净收益。</p></div>
                   <label><span>底仓股数</span><input type="number" min="0" step="100" value={holding.baseShares ?? ""} onChange={(event) => updateHolding(holding.id, { baseShares: optionalNumber(event.target.value) })} placeholder="如 1500" /></label>
                   <label><span>整仓综合成本价 / 股</span><input type="number" min="0" step="0.001" value={holding.baseUnitCost ?? ""} onChange={(event) => updateHolding(holding.id, { baseUnitCost: optionalNumber(event.target.value) })} placeholder="按券商成本填写" /></label>
-                  <div className="base-total"><span>当前整仓成本总额</span><strong>{costReady && totalShares > 0 ? `¥${money.format(totalCost)}` : "待补充成本"}</strong></div>
+                  <label><span>券商精确总成本</span><input type="number" min="0" step="0.01" value={holding.totalCostOverride ?? ""} onChange={(event) => updateHolding(holding.id, { totalCostOverride: optionalNumber(event.target.value) })} placeholder={calculatedTotalCost ? money.format(calculatedTotalCost) : "自动计算"} /></label>
                 </div>
 
                 <div className="lot-heading"><div><span className="eyebrow">新买记录</span><h3>做T批次</h3></div><button type="button" onClick={() => addLot(holding.id)}>＋ 新增买入</button></div>
@@ -314,8 +325,9 @@ export default function PortfolioCalculator() {
                 <div className="position-summary">
                   <div><span>总持仓</span><strong>{integer.format(totalShares)} 股</strong><small>底仓 {integer.format(baseShares)} + 新买 {integer.format(newShares)}</small></div>
                   <div><span>总投入成本</span><strong>{costReady ? `¥${money.format(totalCost)}` : "待补充整仓成本"}</strong><small>{costReady && totalShares > 0 ? `综合成本 ¥${precisePrice.format(totalCost / totalShares)} / 股` : "填写完整后计算"}</small></div>
+                  <div className={grossProfit != null && grossProfit >= 0 ? "positive" : "negative"}><span>券商口径浮盈</span><strong>{grossProfit != null ? `${grossProfit >= 0 ? "+" : "−"}¥${money.format(Math.abs(grossProfit))}` : "—"}</strong><small>{grossReturn != null ? `${grossReturn >= 0 ? "+" : ""}${grossReturn.toFixed(3)}% · 未扣卖出费用` : "价格或成本待补充"}</small></div>
                   <div className="summary-focus"><span>整仓最低盈利卖价</span><strong>{wholeSale ? `¥${money.format(wholeSale.minimumProfitPrice)}` : "—"}</strong><small>{wholeSale ? `全部卖出金额 ¥${money.format(wholeSale.grossAmount)}` : "需先填写整仓成本"}</small></div>
-                  <div className={currentResult && currentResult.profit >= 0 ? "positive" : "negative"}><span>按参考价全部卖出</span><strong>{currentResult ? `${currentResult.profit >= 0 ? "+" : "−"}¥${money.format(Math.abs(currentResult.profit))}` : "—"}</strong><small>{currentResult ? `已扣预计卖出费用 ¥${money.format(currentResult.totalFees)}` : "价格或成本待补充"}</small></div>
+                  <div className={currentResult && currentResult.profit >= 0 ? "positive" : "negative"}><span>全部卖出预计净收益</span><strong>{currentResult ? `${currentResult.profit >= 0 ? "+" : "−"}¥${money.format(Math.abs(currentResult.profit))}` : "—"}</strong><small>{currentResult ? `已扣预计卖出费用 ¥${money.format(currentResult.totalFees)}` : "价格或成本待补充"}</small></div>
                 </div>
               </article>
             );
@@ -386,6 +398,7 @@ function mergeLedgerData(holdings: Holding[]): Holding[] {
         ...holding,
         baseShares: 1500,
         baseUnitCost: holding.baseUnitCost ?? importedHolding.baseUnitCost,
+        totalCostOverride: holding.totalCostOverride ?? importedHolding.totalCostOverride,
         referencePrice: 52.8,
         lots: mergedLots,
       }
