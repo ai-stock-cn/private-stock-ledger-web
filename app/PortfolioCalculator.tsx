@@ -177,16 +177,19 @@ export default function PortfolioCalculator() {
       <header className="portfolio-topbar">
         <div className="brand">
           <span className="brand-mark">私</span>
-          <span><strong>私人持仓台账</strong><small>OWNER ONLY · 本人可见</small></span>
+          <span><strong>私人持仓台账</strong><small>PASSWORD PROTECTED · 本人可见</small></span>
         </div>
-        <div className="save-status"><i />{savedAt ? `本机已保存 ${savedAt}` : "数据仅保存在本机"}</div>
+        <div className="topbar-actions">
+          <div className="save-status"><i />{savedAt ? `本机已保存 ${savedAt}` : "数据仅保存在本机"}</div>
+          <form action="/auth/logout" method="post"><button className="logout-button" type="submit">退出登录</button></form>
+        </div>
       </header>
 
       <section className="portfolio-intro">
         <div>
           <span className="eyebrow">持仓管理 · 做T测算</span>
           <h1>把底仓守住，<br />每一笔交易算清楚。</h1>
-          <p>底仓、新买批次、交易费用和整仓盈亏分开记录。只有通过你的私有访问权限才能打开本站。</p>
+          <p>底仓、新买批次、交易费用和整仓盈亏分开记录。只有输入专属账号和口令才能打开本站。</p>
         </div>
         <div className="fee-hero">
           <span>当前账户口径</span>

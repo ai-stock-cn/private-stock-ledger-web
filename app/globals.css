@@ -74,6 +74,19 @@ button { color: inherit; }
   font-size: 10px;
 }
 .save-status i { width: 7px; height: 7px; border-radius: 50%; background: #56a577; box-shadow: 0 0 0 4px rgba(86,165,119,.12); }
+.topbar-actions { display: flex; align-items: center; gap: 9px; }
+.topbar-actions form { margin: 0; }
+.logout-button {
+  min-height: 35px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.62);
+  color: var(--muted);
+  font-size: 9px;
+  cursor: pointer;
+}
+.logout-button:hover { border-color: rgba(10,18,34,.25); color: var(--ink); }
 
 .portfolio-intro {
   display: grid;
@@ -252,6 +265,7 @@ button { color: inherit; }
 @media (max-width: 470px) {
   .brand small { display: none; }
   .save-status { padding-inline: 10px; font-size: 8px; }
+  .save-status { display: none; }
   .add-stock { grid-template-columns: 1fr; }
   .add-stock button { min-height: 42px; }
   .holding-head { grid-template-columns: 1fr; }
